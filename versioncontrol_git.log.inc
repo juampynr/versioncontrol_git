@@ -470,7 +470,6 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
   if (empty($tags_new)) {
     return array();
   }
-  $tag_ops = array();
 
   // get a list of all tag names with the corresponding commit.
   $tag_commit_list = _versioncontrol_git_log_get_tag_commit_list($tags_new);
@@ -529,11 +528,13 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
     );
 
     $tag = $repository->backend->buildObject('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
-    $tag_op->labels = array($tag_op);
+    $tag_op->labels = array($tag);
     $empty_array = array();
     $tag_op->insert($empty_array);
     // Update the tagged commit to include the label
-    $tagged_commit_op->labels[] = $repository->backend->buildObject('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_MODIFIED));
-    $tagged_commit_op->updateLabels($tagged_commit_op->labels);
+    foreach ($tagged_commit_op as $tagged_commit_op_i) {
+      $tagged_commit_op_i->labels[] = $repository->backend->buildObject('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_MODIFIED));
+      $tagged_commit_op_i->updateLabels($tag_op->labels);
+    }
   }
 }
