@@ -407,7 +407,7 @@ function _versioncontrol_git_get_tag_string($tags) {
   $tag_string = '';
   // $tag_string is a list of fully qualified tag names
   foreach ($tags as $tag) {
-    $tag_string .= escapeshellarg("refs/tags/$tag") . ' ';
+    $tag_string .= escapeshellarg("refs/tags/{$tag->name}") . ' ';
   }
   return $tag_string;
 }
