@@ -54,6 +54,12 @@ function _versioncontrol_git_log_update_repository(&$repository) {
   foreach($branches_new as $branch) {
     $branch->ensure();
   }
+  // reload branches, after they was inserted
+  $branches_in_db = $repository->loadBranches();
+  $branches_label_list = array();
+  foreach ($branches_in_db as $branch) {
+    $branches_label_list[$branch->name] = $branch;
+  }
 
   // Deleted branches are removed, commits in them are not!
   // FIXME could deleting the branch first cause inconsistencies?
@@ -74,7 +80,7 @@ function _versioncontrol_git_log_update_repository(&$repository) {
   foreach ($commits_new as $sha1) {
     $command = "git show --numstat --summary --pretty=format:\"%H%n%P%n%aN <%ae>%n%cN <%ce>%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($sha1);
     $output = _versioncontrol_git_log_exec($command);
-    _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $commits_in_db, $branches_in_db);
+    _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $commits_in_db, $branches_label_list);
   }
 
   // Add a new branch to all commits contained in that branch.
