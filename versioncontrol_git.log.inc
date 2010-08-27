@@ -519,7 +519,7 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
       'repository' => $repository,
     );
 
-    $tag_op = $repository->backend->buildObject('operation', $data);
+    $tag_op = $repository->backend->buildEntity('operation', $data);
 
     $tag_data = array(
       'name' => $tag_name,
@@ -527,13 +527,13 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
       'repository' => $repository,
     );
 
-    $tag = $repository->backend->buildObject('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
+    $tag = $repository->backend->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
     $tag_op->labels = array($tag);
     $empty_array = array();
     $tag_op->insert($empty_array);
     // Update the tagged commit to include the label
     foreach ($tagged_commit_op as $tagged_commit_op_i) {
-      $tagged_commit_op_i->labels[] = $repository->backend->buildObject('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_MODIFIED));
+      $tagged_commit_op_i->labels[] = $repository->backend->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_MODIFIED));
       $tagged_commit_op_i->updateLabels($tag_op->labels);
     }
   }
