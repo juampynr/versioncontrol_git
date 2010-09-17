@@ -477,10 +477,10 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
   foreach($tag_commit_list as $tag_name => $tag_commit) {
     $exec = "git for-each-ref --format=\"$format\" refs/tags/" . escapeshellarg($tag_name);
   	$logs_tag_msg = _versioncontrol_git_log_exec($exec);
-    // $tagged_commit_op = _versioncontrol_git_log_get_commit($repository, $tag_commit);
+
     $tagged_commit_op = $repository->loadCommits(array(), array('revision' => $tag_commit));
   	// Get the specific tag data for annotated vs not annotated tags.
-    if($logs_tag_msg[1] == 'commit') {
+    if ($logs_tag_msg[1] == 'commit') {
       // simple tag
       // [2] is tagged commit [3] tagname [4] and [5] empty [6] commit log message
       // We get the tagger, the tag_date and the tag_message from the tagged commit.
@@ -507,19 +507,8 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
       }
     }
     else {
-      drupal_set_message(t('Serious problem in tag parsing, please check that you\'re using a supported version of git!', 'error'));
+      watchdog('versioncontrol_git', 'Serious problem in tag parsing, please check that you\'re using a supported version of git!');
     }
-    $data = array(
-      'type' => VERSIONCONTROL_OPERATION_TAG,
-      'committer' => $tagger,
-      'date' => $tag_date,
-      'revision' => $tag_commit,
-      'message' => $message,
-      'author' => $tagger,
-      'repository' => $repository,
-    );
-
-    $tag_op = $repository->backend->buildEntity('operation', $data);
 
     $tag_data = array(
       'name' => $tag_name,
@@ -528,13 +517,6 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
     );
 
     $tag = $repository->backend->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
-    $tag_op->labels = array($tag);
-    $empty_array = array();
-    $tag_op->insert($empty_array);
-    // Update the tagged commit to include the label
-    foreach ($tagged_commit_op as $tagged_commit_op_i) {
-      $tagged_commit_op_i->labels[] = $repository->backend->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_MODIFIED));
-      $tagged_commit_op_i->updateLabels($tag_op->labels);
-    }
+    $tag->insert();
   }
 }
