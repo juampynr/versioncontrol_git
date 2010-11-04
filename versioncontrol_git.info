@@ -4,3 +4,4 @@ description = "Git backend for Version Control API - Provides Git commit informa
 core=6.x
 dependencies[] = versioncontrol
 package = Version Control
+vcapi-backend = 1
