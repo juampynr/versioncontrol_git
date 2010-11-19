@@ -355,6 +355,7 @@ function _versioncontrol_git_log_parse_and_insert_commit($repository, $logs, $br
   $data->message = $message;
   $data->repository = $repository;
   $data->repo_id = $repository->repo_id;
+  $data->type = VERSIONCONTROL_OPERATION_COMMIT;
 
   $op = new VersioncontrolGitOperation();
   $op->build($data);
