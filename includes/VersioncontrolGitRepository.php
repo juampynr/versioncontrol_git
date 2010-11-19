@@ -42,6 +42,15 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
     }
   }
 
+  public function fetchLogs() {
+    // Set a hefty timeout, in case it ends up being a long fetch
+    if (!ini_get('safe_mode')) {
+      set_time_limit(3600);
+    }
+    require_once drupal_get_path('module', 'versioncontrol_git') .'/versioncontrol_git.log.inc';
+    return _versioncontrol_git_log_update_repository($this);
+  }
+
   /**
    * Invoke git to fetch a list of local branches in the repository, including
    * the SHA1 of the current branch tip and the branch name.

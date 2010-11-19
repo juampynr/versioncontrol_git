@@ -60,26 +60,6 @@ function versioncontrol_git_versioncontrol_backends() {
 }
 
 /**
- * Implementation of hook_menu().
- */
-function versioncontrol_git_menu() {
-  $items = array();
-  $items['admin/project/versioncontrol-repositories/clearlock/git'] = array(
-    'title' => 'Clear lock',
-    'page callback' => 'versioncontrol_git_clearlock_repository_callback',
-    'access arguments' => array('administer version control systems'),
-    'type' => MENU_CALLBACK,
-  );
-  $items['admin/project/versioncontrol-repositories/update/git'] = array(
-    'title' => 'Fetch log',
-    'page callback' => 'versioncontrol_git_update_repository_callback',
-    'access arguments' => array('administer version control systems'),
-    'type' => MENU_CALLBACK,
-  );
-  return $items;
-}
-
-/**
  * Implementation of hook_cron()
  */
 function versioncontrol_git_cron() {
@@ -96,7 +76,7 @@ function versioncontrol_git_cron() {
       // get repositories that have log fetching enabled
       continue;
     }
-    _versioncontrol_git_update_repository($repository);
+    $repository->fetchLogs();
   }
 }
 
@@ -128,66 +108,4 @@ function _versioncontrol_git_get_branch_intersect($repository, $item1, $item2) {
     }
   }
   return array_pop($branches1); // We don't know any keys in $branches, so we use array_pop here. Also it'll return NULL if needed
-}
-
-/**
- * Menu callback for 'admin/project/versioncontrol-repositories/clearlock/git'
- * (expecting a $repo_id as one more path argument):
- * Clears the update lock for the specified repository
- */
-function versioncontrol_git_clearlock_repository_callback($repo_id) {
-  if (is_numeric($repo_id)) {
-    $repository = versioncontrol_repository_load($repo_id);
-    $repository->locked = 0;
-    $repository->update();
-    drupal_set_message(t('Cleared the lock for the repository.'));
-  }
-  drupal_goto('admin/project/versioncontrol-repositories');
-}
-
-/**
- * Menu callback for 'admin/project/versioncontrol-repositories/update/git'
- * (expecting a $repo_id as one more path argument):
- * Retrieve/validate the specified repository, fetch new commits, tags
- * and branches by invoking the git executable, output messages and
- * redirect back to the repository page.
- */
-function versioncontrol_git_update_repository_callback($repo_id) {
-  if (is_numeric($repo_id)) {
-    $repository = versioncontrol_repository_load($repo_id);
-
-    if (isset($repository)) {
-      $update_method = $repository->update_method;
-    }
-  }
-  if (isset($update_method) && $update_method == VERSIONCONTROL_GIT_UPDATE_CRON) {
-    // Set timeout limit to 3600 seconds as it can take a long time
-    // to process the log initially.
-    if (!ini_get('safe_mode')) {
-      set_time_limit(3600);
-    }
-    if (_versioncontrol_git_update_repository($repository)) {
-      drupal_set_message(t('Fetched new log entries.'));
-    }
-    else {
-      drupal_set_message(t('Error while fetching new log entries.'), 'error');
-    }
-  }
-  else { // $repo_id is not a number or doesn't correlate to any repository.
-    drupal_set_message(t('No such repository, did not fetch anything.'));
-  }
-  drupal_goto('admin/project/versioncontrol-repositories');
-}
-
-/**
- * Actually update the repository by fetching commits and other stuff
- * directly from the repository, invoking the git executable.
- *
- * @return
- *   TRUE if the logs were updated, or FALSE if fetching and updating the logs
- *   failed for whatever reason.
- */
-function _versioncontrol_git_update_repository(&$repository) {
-  require_once drupal_get_path('module', 'versioncontrol_git') .'/versioncontrol_git.log.inc';
-  return _versioncontrol_git_log_update_repository($repository);
 }
