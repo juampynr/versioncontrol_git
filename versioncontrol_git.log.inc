@@ -4,6 +4,7 @@
  * @file
  * Git backend for Version Control API - Provides Git commit information and
  * account management as a pluggable backend.
+ * FIXME add an action to operation_labels
  *
  * Copyright 2008 by Jimmy Berry ("boombatower", http://drupal.org/user/214218)
  * Copyright 2009-2010 by Cornelius Riemenschneider ("CorniI", http://drupal.org/user/136353)
@@ -20,28 +21,31 @@
  * FIXME while largely ported to the new entities system, this is still not 100%
  * done
  */
-function _versioncontrol_git_log_update_repository(&$repository) {
+function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &$repository) {
   $root = escapeshellcmd($repository->root);
   putenv("GIT_DIR=$root/.git");
+
   if ($repository->locked == TRUE) {
     drupal_set_message(t('This repository is locked, there is already a fetch in progress. If this is not the case, press the clear lock button.'), 'error');
     return FALSE;
   }
-  // $repository->locked = 1;
-  // $repository->update();
+  $repository->locked = 1;
+  $repository->update();
+
+  // 1. Process branches
 
   // Fetch branches from the repo and load them from the db.
   $branches_in_repo = $repository->fetchBranches();
-  $bdb = $repository->loadBranches();
-  $branches_in_db = array();
-  foreach ($bdb as $branch) { // Branches get keyed on id; key on name instead.
-    $branches_in_db[$branch->name] = $branch;
+  $branches_in_db = $repository->loadBranches();
+  $branches_in_db_by_name = array();
+  foreach ($branches_in_db as $branch) { // Branches get keyed on id; key on name instead.
+    $branches_in_db_by_name[$branch->name] = $branch;
   }
-  unset($bdb);
+  unset($branches_in_db);
 
   // Determine whether we've got branch changes to make.
-  $branches_new = array_diff_key($branches_in_repo, $branches_in_db);
-  $branches_deleted = array_diff_key($branches_in_db, $branches_in_repo);
+  $branches_new = array_diff_key($branches_in_repo, $branches_in_db_by_name);
+  $branches_deleted = array_diff_key($branches_in_db_by_name, $branches_in_repo);
 
   // Insert new branches in the repository. Later all commits in these new
   // branches will be updated.
@@ -50,58 +54,62 @@ function _versioncontrol_git_log_update_repository(&$repository) {
   // We also can't insert a VCOperation which adds the branch, because
   // we don't know anything about the branch. This is all stuff a hook could
   // figure out.
-  // Here we will just ensure that each branch is in the database.
   foreach($branches_new as $branch) {
-    $branch->ensure();
+    $branch->insert();
   }
   // reload branches, after they was inserted
   $branches_in_db = $repository->loadBranches();
-  $branches_label_list = array();
+  $branches_in_db_by_name = array();
   foreach ($branches_in_db as $branch) {
-    $branches_label_list[$branch->name] = $branch;
+    $branches_in_db_by_name[$branch->name] = $branch;
   }
 
   // Deleted branches are removed, commits in them are not!
-  // FIXME could deleting the branch first cause inconsistencies?
   foreach($branches_deleted as $branch) {
     $branch->delete();
   }
 
-  $cdb = $repository->loadCommits();
-  $commits_in_db = array();
-  foreach ($cdb as $commit) {
-    $commits_in_db[] = $commit->revision;
+  // 2. Process tags
+
+  // Insert new tags in the database.
+  $tags_in_repo = $repository->fetchTags();
+  $tags_in_db = $repository->loadTags();
+  $tags_in_db_by_name = array();
+  foreach ($tags_in_db as $tag) {
+    $tags_in_db_by_name[$tag->name] = $tag;
   }
-  unset($cdb);
-  $commits_in_repo = $repository->fetchCommits();
-  $commits_new = array_diff($commits_in_repo, $commits_in_db);
+  unset($tags_in_db);
+  // Deleting tags is *not* supported. Read the manual if you want to know why...
+  // Check for new tags.
+  $tags_new = array_diff_key($tags_in_repo, $tags_in_db_by_name);
+  if (!empty($tags_new)) {
+    _versioncontrol_git_log_process_tags($repository, $tags_new);
+  }
+
+  // 3. Process commits
+
+  // Fetch commits from the repo and load them from the db.
+  $commits_in_repo_hashes = $repository->fetchCommits();
+  $commits_in_db = $repository->loadCommits();
+  $commits_in_db_hashes = array();
+  foreach ($commits_in_db as $commit) {
+    $commits_in_db_hashes[] = $commit->revision;
+  }
+  unset($commits_in_db);
+  $commits_new = array_diff($commits_in_repo_hashes, $commits_in_db_hashes);
 
   // Insert new commits in the database.
-  foreach ($commits_new as $sha1) {
-    $command = "git show --numstat --summary --pretty=format:\"%H%n%P%n%aN <%ae>%n%cN <%ce>%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($sha1);
+  foreach ($commits_new as $hash) {
+    $command = "git show --numstat --summary --pretty=format:\"%H%n%P%n%aN <%ae>%n%cN <%ce>%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
     $output = _versioncontrol_git_log_exec($command);
-    _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $commits_in_db, $branches_label_list);
+    _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $branches_in_db_by_name);
   }
 
   // Add a new branch to all commits contained in that branch.
   foreach ($branches_new as $branch_new) {
-    $commits_ids = _versioncontrol_git_log_get_commits_in_branch($branch_new);
+    $commit_ids = _versioncontrol_git_log_get_commits_in_branch($branch_new);
     $commits = $repository->loadCommits(array(), array('revision' => $commit_ids));
-    _versioncontrol_git_log_attach_branch_to_commits($branches_in_db[$branch_new], $commits);
-  }
-
-  // Insert new tags in the database.
-  $tags_in_repo = $repository->fetchTags();
-  $tdb = $repository->loadTags();
-  $tags_in_db = array();
-  foreach ($tdb as $tag) {
-    $tags_in_db[$tag->name] = $tag;
-  }
-  // Deleting tags is *not* supported. Read the manual if you want to know why...
-  // Check for new tags.
-  $tags_new = array_diff_key($tags_in_repo, $tags_in_db);
-  if (!empty($tags_new)) {
-    _versioncontrol_git_log_process_tags($repository, $tags_new);
+    _versioncontrol_git_log_attach_branch_to_commits($branches_in_db_by_name[$branch_new->name], $commits);
   }
 
   // Update repository updated field. Displayed on administration interface for documentation purposes.
@@ -180,11 +188,11 @@ function _versioncontrol_git_log_get_commits_in_repo($repository) {
 
 /**
  * This function returns all commits in the given branch.
- * @param string $branch
+ * @param VersioncontrolBranch $branch
  * @return array An array of strings with all commit id's in it
  */
 function _versioncontrol_git_log_get_commits_in_branch($branch) {
-  $logs = _versioncontrol_git_log_exec("git rev-list " . escapeshellarg($branch) . " --");
+  $logs = _versioncontrol_git_log_exec("git rev-list " . escapeshellarg($branch->name) . " --");
   $commits = array();
   while (($line = next($logs)) !== FALSE) {
     $commits[] = trim($line);
@@ -242,10 +250,8 @@ function _versioncontrol_git_parse_items(&$logs, &$line, $data, $parents) {
     $op_items[$path]->build(array('path' => $path) + $data);
 
     if (is_numeric($matches[1]) && is_numeric($matches[2])) {
-      $op_items[$path]->line_changes = array(
-        'added' => $matches[1],
-        'removed' => $matches[2]
-      );
+      $op_items[$path]->line_changes_added = $matches[1];
+      $op_items[$path]->line_changes_removed = $matches[2];
     }
   } while (($line = next($logs)) !== FALSE);
 
@@ -281,15 +287,14 @@ function _versioncontrol_git_parse_items(&$logs, &$line, $data, $parents) {
  *
  * @param VersioncontrolRepository $repository
  * @param array $logs The output of 'git log' to parse
- * @param array $commits_in_db
  * @param array $branch_label_list An associative list of branchname => VersioncontrolBranch
  */
-function _versioncontrol_git_log_parse_and_insert_commit($repository, $logs, &$commits_in_db, $branch_label_list) {
+function _versioncontrol_git_log_parse_and_insert_commit($repository, $logs, $branch_label_list) {
   // Get Revision
   $revision = trim(next($logs));
 
   // Get $parents
-  $parents = explode(" ", trim(next($logs)));
+  $parents = explode(' ', trim(next($logs)));
   if ($parents[0] == '') {
     $parents = array();
   }
@@ -335,21 +340,27 @@ function _versioncontrol_git_log_parse_and_insert_commit($repository, $logs, &$c
     'date' => $date,
     'message' => $message,
     'repository' => $repository,
+    'repo_id' => $repository->repo_id,
   );
 
   // Parse in the raw data and create VersioncontrolGitItem objects.
   $op_items = _versioncontrol_git_parse_items($logs, $line, $data, $parents);
 
-  // modify the data array to be used for the actual commit operation
-  unset($data['action']);
-  $data['type'] = VERSIONCONTROL_OPERATION_COMMIT;
+  // rebuild the data array to be used for the commit op
+  $data = new stdClass();
+  $data->revision = $revision;
+  $data->author = $author;
+  $data->committer = $committer;
+  $data->date = $date;
+  $data->message = $message;
+  $data->repository = $repository;
+  $data->repo_id = $repository->repo_id;
 
   $op = new VersioncontrolGitOperation();
   $op->build($data);
+  $op->itemRevisions = $op_items;
   $op->labels = _versioncontrol_git_log_get_branches_of_commit($revision, $branch_label_list);
-  $op->insert($op_items);
-
-  $commits_in_db[] = $op;
+  $op->insert();
 }
 
 /// All branch related functions
@@ -361,17 +372,18 @@ function _versioncontrol_git_log_parse_and_insert_commit($repository, $logs, &$c
  * @return none
  */
 function _versioncontrol_git_log_attach_branch_to_commits($branch, $commits) {
-  foreach($commits as $vc_op_id => $op) {
-  	// We need this complicated logic to avoid adding a branch twice to a commit.
+  foreach ($commits as $op) {
+    // We need this complicated logic to avoid adding a branch twice to a commit.
     $already_there = FALSE;
     foreach($op->labels as $label) {
-      if($label->type == VERSIONCONTROL_LABEL_BRANCH && $label->name == $branch->name) {
+      if (is_subclass_of($label, 'VersioncontrolBranch') && $label->name == $branch->name) {
         $already_there = TRUE;
+        break;
       }
     }
-    if(!$already_there) {
-    	$op->labels[] = $branch;
-    	$op->updateLabels($op->labels);
+    if (!$already_there) {
+      $op->labels[] = $branch;
+      $op->updateLabels($op->labels);
     }
   }
 }
@@ -468,7 +480,7 @@ function _versioncontrol_git_log_get_tag_commit_list($tags) {
  */
 function _versioncontrol_git_log_process_tags($repository, $tags_new) {
   if (empty($tags_new)) {
-    return array();
+    return;
   }
 
   // get a list of all tag names with the corresponding commit.
@@ -478,7 +490,8 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
     $exec = "git for-each-ref --format=\"$format\" refs/tags/" . escapeshellarg($tag_name);
   	$logs_tag_msg = _versioncontrol_git_log_exec($exec);
 
-    $tagged_commit_op = $repository->loadCommits(array(), array('revision' => $tag_commit));
+    $tag_ops = $repository->loadCommits(array(), array('revision' => $tag_commit));
+    $tagged_commit_op = reset($tag_ops);
   	// Get the specific tag data for annotated vs not annotated tags.
     if ($logs_tag_msg[1] == 'commit') {
       // simple tag
@@ -512,8 +525,8 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
 
     $tag_data = array(
       'name' => $tag_name,
-      'type' => VERSIONCONTROL_OPERATION_TAG,
       'repository' => $repository,
+      'repo_id' => $repository->repo_id,
     );
 
     $tag = $repository->backend->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
