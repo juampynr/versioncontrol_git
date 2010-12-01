@@ -98,7 +98,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   }
 
   public function fetchCommits($branch_name = NULL) {
-    $logs = $this->exec('git rev-list ' . (empty($branch_name) ? '--all' : $branch_name));
+    $logs = $this->exec('git rev-list --reverse ' . (empty($branch_name) ? '--all' : $branch_name));
     $commits = array();
     while (($line = next($logs)) !== FALSE) {
       $commits[] = trim($line);

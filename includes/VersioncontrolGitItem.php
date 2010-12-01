@@ -22,4 +22,26 @@ class VersioncontrolGitItem extends VersioncontrolItem {
     return _versioncontrol_git_get_branch_intersect($this->repository, $this, $other_item);
   }
 
+  public function determineSourceItemRevisionID() {
+    if (!empty($this->sourceItem->item_revision_id)) {
+      return;
+    }
+    if (!empty($this->source_item_revision_id)) {
+      $this->sourceItem = $this->backend->loadEntity('item', array($this->source_item_revision_id));
+      return;
+    }
+    if ($this->sourceItem instanceof VersioncontrolItem) {
+      // do not insert a duplicate item revision
+      $db_item = $this->backend->loadEntity('item', array(), array('revision' => $this->sourceItem->revision, 'path' => $this->sourceItem->path));
+      if (is_subclass_of($db_item, 'VersioncontrolItem')) {
+        $this->sourceItem = $db_item;
+      }
+      else {
+        $this->sourceItem->insert();
+      }
+      $this->source_item_revision_id = $this->sourceItem->item_revision_id;
+      return;
+    }
+  }
+
 }

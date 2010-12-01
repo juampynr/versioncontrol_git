@@ -9,8 +9,8 @@ class VersioncontrolGitBackend extends VersioncontrolBackend {
       'item' => 'VersioncontrolGitItem',
     );
 
-  public function __construct() {
-    parent::__construct();
+  public function __construct($backend = NULL) {
+    parent::__construct($backend);
     $this->name = 'Git';
     $this->description = t('Git is a fast, scalable, distributed revision control system with an unusually rich command set that provides both high-level operations and full access to internals.');
     $this->capabilities = array(
