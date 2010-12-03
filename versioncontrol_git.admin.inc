@@ -42,6 +42,7 @@ function versioncontrol_git_repository_admin_form_alter(&$form, $form_state, $fo
       VERSIONCONTROL_GIT_UPDATE_XGIT => t('Use external script to insert data.'),
     ),
   );
+  $form['repository_information']['root']['#description'] = t('An absolute path to your bare repository.');
 }
 
 /**

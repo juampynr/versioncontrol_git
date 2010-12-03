@@ -23,7 +23,7 @@
  */
 function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &$repository) {
   $root = escapeshellcmd($repository->root);
-  putenv("GIT_DIR=$root/.git");
+  putenv("GIT_DIR=$root");
 
   if ($repository->locked == TRUE) {
     drupal_set_message(t('This repository is locked, there is already a fetch in progress. If this is not the case, press the clear lock button.'), 'error');

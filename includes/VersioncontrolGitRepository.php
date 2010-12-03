@@ -37,7 +37,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   public function setEnv() {
     if (!$this->envSet) {
       $root = escapeshellcmd($this->root);
-      putenv("GIT_DIR=$root/.git");
+      putenv("GIT_DIR=$root");
       $this->envSet = TRUE;
     }
   }
