@@ -37,20 +37,6 @@ function versioncontrol_git_help($section, $arg) {
 }
 
 /**
- * Implementation of hook_autoload_info().
- */
-function versioncontrol_git_autoload_info() {
-  $items = array();
-  $names = array('Backend', 'Repository', 'Account', 'Operation', 'Item');
-  foreach ($names as $name) {
-    $items["VersioncontrolGit$name"] = array(
-      'file' => "includes/VersioncontrolGit$name.php",
-    );
-  }
-  return $items;
-}
-
-/**
  * Implementation of hook_versioncontrol_backends().
  */
 function versioncontrol_git_versioncontrol_backends() {
