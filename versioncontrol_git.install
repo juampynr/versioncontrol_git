@@ -8,17 +8,3 @@
  * Copyright 2008 by Jimmy Berry ("boombatower", http://drupal.org/user/214218)
  * Copyright 2009 by Cornelius Riemenschneider ("CorniI", http://drupal.org/user/136353)
  */
-
-/**
- * Implementation of hook_uninstall().
- */
-function versioncontrol_git_uninstall() {
-  cache_clear_all('versioncontrol_git_rev_cache', 'cache');
-}
-
-/**
- * Implementation of hook_disable().
- */
-function versioncontrol_git_disable() {
-  cache_clear_all('versioncontrol_git_rev_cache', 'cache');
-}
