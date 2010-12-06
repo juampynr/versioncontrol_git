@@ -10,3 +10,4 @@ files[] = includes/VersioncontrolGitBackend.php
 files[] = includes/VersioncontrolGitRepository.php
 files[] = includes/VersioncontrolGitItem.php
 files[] = includes/VersioncontrolGitOperation.php
+files[] = includes/VersioncontrolGitOperationController.php

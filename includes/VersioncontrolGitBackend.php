@@ -9,6 +9,10 @@ class VersioncontrolGitBackend extends VersioncontrolBackend {
       'item' => 'VersioncontrolGitItem',
     );
 
+  public $classesControllers = array(
+    'operation' => 'VersioncontrolGitOperationController',
+  );
+
   public function __construct() {
     parent::__construct();
     $this->name = 'Git';

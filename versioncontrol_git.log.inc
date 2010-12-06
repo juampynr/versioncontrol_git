@@ -83,7 +83,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   // Insert new commits in the database.
   foreach ($commits_new as $hash) {
-    $command = "git show --numstat --summary --pretty=format:\"%H%n%P%n%aN <%ae>%n%cN <%ce>%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
+    $command = "git show --numstat --summary --pretty=format:\"%H%n%P%n%an%n%ae%n%cn%n%ce%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
     $output = _versioncontrol_git_log_exec($command);
     _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $branches_in_db_by_name);
   }
@@ -281,20 +281,22 @@ function _versioncontrol_git_parse_items(&$logs, &$line, $data, $parents) {
  * @param array $branch_label_list An associative list of branchname => VersioncontrolBranch
  */
 function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepository $repository, $logs, $branch_label_list) {
-  // Get Revision
+  // Get commit hash (vcapi's "revision")
   $revision = trim(next($logs));
 
-  // Get $parents
+  // Get parent commit hash(es)
   $parents = explode(' ', trim(next($logs)));
   if ($parents[0] == '') {
     $parents = array();
   }
   $merge = isset($parents[1]); // Multiple parents indicates a merge
 
-  // Get author
-  $author = trim(next($logs));
-  // Get committer
-  $committer = trim(next($logs));
+  // Get author data
+  $author_name = trim(next($logs));
+  $author_email = trim(next($logs));
+  // Get committer data
+  $committer_name = trim(next($logs));
+  $committer_email = trim(next($logs));
 
   // Get date as timestamp
   $date = trim(next($logs));
@@ -325,8 +327,12 @@ function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepositor
   $op_data = array(
     'type' => VERSIONCONTROL_OPERATION_COMMIT,
     'revision' => $revision,
-    'author' => $author,
-    'committer' => $committer,
+    'author' => $author_email,
+    'author_name' => $author_name,
+    'committer' => $committer_email,
+    'committer_name' => $committer_name,
+    'parent_commit' => reset($parents),
+    'merge' => $merge,
     'date' => $date,
     'message' => $message,
     'repository' => $repository,
