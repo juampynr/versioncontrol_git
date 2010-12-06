@@ -335,7 +335,7 @@ function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepositor
   $op = new VersioncontrolGitOperation($repository->getBackend());
   $op->build($op_data);
   $op->labels = _versioncontrol_git_log_get_branches_of_commit($revision, $branch_label_list);
-  $op->insert();
+  $op->insert(array('map users' => TRUE));
 
   $item_action = $merge ? VERSIONCONTROL_ACTION_MERGED : VERSIONCONTROL_ACTION_MODIFIED;
   // build the data array to be used as default values for the item revision
