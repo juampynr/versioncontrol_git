@@ -9,6 +9,11 @@
  * Copyright 2009 by Cornelius Riemenschneider ("CorniI", http://drupal.org/user/136353)
  */
 
+/**
+ * The 40-zeroes string that git uses to represent a null ref.
+ */
+define('GIT_NULL_REV', '0000000000000000000000000000000000000000');
+
 // Update methods.
 define('VERSIONCONTROL_GIT_UPDATE_CRON', 0);
 define('VERSIONCONTROL_GIT_UPDATE_XGIT', 1);
