@@ -9,6 +9,14 @@
  * Copyright 2009 by Cornelius Riemenschneider ("CorniI", http://drupal.org/user/136353)
  */
 
+/**
+ * Implementation of hook_install().
+ */
+function versioncontrol_git_install() {
+  // Create tables.
+  drupal_install_schema('versioncontrol_git');
+}
+
 function versioncontrol_git_schema() {
   $schema = array();
   $schema['versioncontrol_git_operations'] = array(
