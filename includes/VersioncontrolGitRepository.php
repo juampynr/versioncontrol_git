@@ -111,4 +111,21 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
     reset($logs); // Reset the array pointer, so that we can use next().
     return $logs;
   }
+
+  /**
+   * Verify if the repository root points to a valid Git repository.
+   *
+   * @return boolean
+   *   TRUE for valid, FALSE for invalid
+   */
+  public function isValidGitRepo() {
+    // do not use exec() method to get the shell return code
+    if (!$this->envSet) {
+      $this->setEnv();
+    }
+    $logs = array();
+    exec('git ls-files', $logs, $shell_return);
+    return $shell_return == 0;
+  }
+
 }
