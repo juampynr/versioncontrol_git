@@ -34,6 +34,12 @@ class VersioncontrolGitOperation extends VersioncontrolOperation {
       ->execute();
   }
 
+  protected function backendDelete() {
+    db_delete('versioncontrol_git_operations')
+      ->condition('vc_op_id', $this->vc_op_id)
+      ->execute();
+  }
+
   /**
    * Implementation of abstract method.
    */
