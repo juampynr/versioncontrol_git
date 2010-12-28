@@ -100,3 +100,24 @@ function _versioncontrol_git_get_branch_intersect($repository, $item1, $item2) {
   }
   return array_pop($branches1); // We don't know any keys in $branches, so we use array_pop here. Also it'll return NULL if needed
 }
+
+/**
+ * Validate the path supplied for the git binary.
+ */
+function _versioncontrol_git_binary_check_path($path) {
+  $errors = array();
+  // Special case for using evironment $PATH to determine git executable.
+  if ($path == 'git') {
+    $path = system('which git');
+  }
+  if (!is_file($path)) {
+    $errors[] = t('The specified git path %file does not exist.', array('%file' => $path));
+  }
+  if (!$errors && !is_executable($path)) {
+    $errors[] = t('The specified git path %file is not executable.', array('%file' => $path));
+  }
+  if ($errors && $open_basedir = ini_get('open_basedir')) {
+    $errors[] = t('PHP\'s <a href="!open-basedir">open_basedir</a> security restriction is set to %open-basedir, which may be interfering with attempts to locate git.', array('%file' => $path, '%open-basedir' => $open_basedir, '!info-link' => url('http://php.net/features.safe-mode#ini.open-basedir')));
+  }
+  return $errors;
+}

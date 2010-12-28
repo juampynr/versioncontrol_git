@@ -48,7 +48,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       'action' => VERSIONCONTROL_ACTION_MODIFIED,
       'label_id' => NULL,
     );
-    $logs = $this->exec('git show-ref --heads');
+    $logs = $this->exec('show-ref --heads');
     while (($branchdata = next($logs)) !== FALSE) {
       list($data['tip'], $data['name']) = explode(' ', trim($branchdata));
       $data['name'] = substr($data['name'], 11);
@@ -71,7 +71,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       'label_id' => NULL,
     );
 
-    $logs = $this->exec('git show-ref --tags');
+    $logs = $this->exec('show-ref --tags');
     while (($tagdata = next($logs)) !== FALSE) {
       list($data['tip'], $data['name']) = explode(' ', trim($tagdata));
       $data['name'] = substr($data['name'], 10);
@@ -83,7 +83,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   }
 
   public function fetchCommits($branch_name = NULL) {
-    $logs = $this->exec('git rev-list --reverse ' . (empty($branch_name) ? '--all' : $branch_name));
+    $logs = $this->exec('rev-list --reverse ' . (empty($branch_name) ? '--all' : $branch_name));
     $commits = array();
     while (($line = next($logs)) !== FALSE) {
       $commits[] = trim($line);
@@ -101,12 +101,17 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
    *  Logged output from the command; an array of either strings or file
    *  pointers.
    */
-  protected function exec($cmds) {
+  protected function exec($command) {
     if (!$this->envSet) {
       $this->setEnv();
     }
     $logs = array();
-    exec($cmds, $logs);
+    $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
+    if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
+      watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+      return array();
+    }
+    exec(escapeshellcmd("$git_bin $command"), $logs);
     array_unshift($logs, '');
     reset($logs); // Reset the array pointer, so that we can use next().
     return $logs;
@@ -124,7 +129,12 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       $this->setEnv();
     }
     $logs = array();
-    exec('git ls-files', $logs, $shell_return);
+    $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
+    if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
+      watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+      return FALSE;
+    }
+    exec(escapeshellcmd("$git_bin ls-files"), $logs, $shell_return);
     return $shell_return == 0;
   }
 

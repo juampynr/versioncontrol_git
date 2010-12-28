@@ -81,6 +81,41 @@ function versioncontrol_git_versioncontrol_repository_submit(&$repository, $form
 }
 
 /**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function versioncontrol_git_form_versioncontrol_admin_settings_alter(&$form, &$form_state) {
+  $form['versioncontrol_git'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Git backend configuration'),
+    '#description' => t('Options to modify how Git backend behaves.'),
+    '#collapsible' => TRUE,
+  );
+  $form['versioncontrol_git']['versioncontrol_git_binary_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Git binary path'),
+    '#default_value' => variable_get('versioncontrol_git_binary_path', 'git'),
+    '#description' => t('Path to the git program to be used. By default it use <code>git</code> as it assumes the binary is on the <code>$PATH</code>.'),
+    '#element_validate' => array('versioncontrol_git_form_versioncontrol_admin_settings_validate_path'),
+  );
+  $form['#submit'][] = 'versioncontrol_git_form_versioncontrol_admin_settings_submit';
+}
+
+function versioncontrol_git_form_versioncontrol_admin_settings_validate_path($element) {
+  if ($errors = _versioncontrol_git_binary_check_path($element['#value'])) {
+    form_set_error($element['#parents'][0], implode('<br />', $errors));
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Submit function for our alter to versioncontrol_admin_settings form.
+ */
+function versioncontrol_git_form_versioncontrol_admin_settings_submit(&$form, &$form_state) {
+  variable_set('versioncontrol_git_binary_path', $form_state['values']['versioncontrol_git_binary_path']);
+}
+
+/**
  * Implementation of hook_versioncontrol_alter_repository_list():
  * Add Git specific columns into the list of Git repositories.
  * By changing the @p $header and @p $rows_by_repo_id arguments,

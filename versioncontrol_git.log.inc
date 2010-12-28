@@ -87,7 +87,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   // Insert new commits in the database.
   foreach ($commits_new as $hash) {
-    $command = "git show --numstat --summary --pretty=format:\"%H%n%P%n%an%n%ae%n%cn%n%ce%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
+    $command = "show --numstat --summary --pretty=format:\"%H%n%P%n%an%n%ae%n%cn%n%ce%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
     $output = _versioncontrol_git_log_exec($command);
     _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $branches_in_db_by_name);
   }
@@ -132,7 +132,12 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
  */
 function _versioncontrol_git_log_exec($command) {
   $logs = array();
-  exec($command, $logs);
+  $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
+  if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
+    watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+    return array();
+  }
+  exec(escapeshellcmd("$git_bin $command"), $logs);
   array_unshift($logs, ''); // FIXME doing it this way is just wrong.
   reset($logs); // Reset the array pointer, so that we can use next().
   return $logs;
@@ -147,7 +152,7 @@ function _versioncontrol_git_log_exec($command) {
  * @return VersioncontrolBranch
  */
 function _versioncontrol_git_log_get_branches_of_commit($revision, $branch_label_list) {
-  $exec = 'git branch --contains ' . escapeshellarg($revision);
+  $exec = 'branch --contains ' . escapeshellarg($revision);
   $logs = _versioncontrol_git_log_exec($exec);
   $branches = array();
   while (($line = next($logs)) !== FALSE) {
@@ -166,7 +171,7 @@ function _versioncontrol_git_log_get_branches_of_commit($revision, $branch_label
  * @return array An array of strings with all commit id's in it
  */
 function _versioncontrol_git_log_get_commits_in_repo($repository) {
-  $logs = _versioncontrol_git_log_exec("git rev-list --all");
+  $logs = _versioncontrol_git_log_exec("rev-list --all");
   $commits = array();
   while (($line = next($logs)) !== FALSE) {
     $commits[] = trim($line);
@@ -180,7 +185,7 @@ function _versioncontrol_git_log_get_commits_in_repo($repository) {
  * @return array An array of strings with all commit id's in it
  */
 function _versioncontrol_git_log_get_commits_in_branch($branch) {
-  $logs = _versioncontrol_git_log_exec("git rev-list " . escapeshellarg($branch->name) . " --");
+  $logs = _versioncontrol_git_log_exec("rev-list " . escapeshellarg($branch->name) . " --");
   $commits = array();
   while (($line = next($logs)) !== FALSE) {
     $commits[] = trim($line);
@@ -210,7 +215,7 @@ function _versioncontrol_git_fill_source_item(&$item, $parents, $inc_data) {
   $path_stripped = substr($item->path, 1);
   // using -5 to let detect merges until 4 parents, merging more than 4 parents in one operation is insane!
   // use also --first-parent to retrieve only one parent for the current support of VCS API
-  $cmd = 'git log --first-parent --follow --pretty=format:"%H" -5 ' . escapeshellarg($item->revision) . ' -- ' . escapeshellarg($path_stripped);
+  $cmd = 'log --first-parent --follow --pretty=format:"%H" -5 ' . escapeshellarg($item->revision) . ' -- ' . escapeshellarg($path_stripped);
   $prev_revisions = _versioncontrol_git_log_exec($cmd);
 
   next($prev_revisions); // grab our hash out
@@ -408,7 +413,7 @@ function _versioncontrol_git_log_get_tags_in_db($repository) {
  * @return array
  */
 function _versioncontrol_git_log_get_tags_in_repo() {
-  $log = _versioncontrol_git_log_exec('git show-ref --tags'); // Query tags.
+  $log = _versioncontrol_git_log_exec('show-ref --tags'); // Query tags.
   $tags = array();
   while (($line = next($log)) !== FALSE) {
   	// the output of git show-ref --tags looks like this
@@ -444,7 +449,7 @@ function _versioncontrol_git_log_get_tag_commit_list($tags) {
     return array();
   }
   $tag_string = _versioncontrol_git_get_tag_string($tags);
-  $exec = "git show-ref -d $tag_string";
+  $exec = "show-ref -d $tag_string";
   $tag_commit_list_raw = _versioncontrol_git_log_exec($exec);
   $tag_commit_list = array();
   $tags_annotated = array();
@@ -490,7 +495,7 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
   $tag_commit_list = _versioncontrol_git_log_get_tag_commit_list($tags_new);
   $format = '%(objecttype)%0a%(objectname)%0a%(refname)%0a%(taggername) %(taggeremail)%0a%(taggerdate)%0a%(contents)ENDOFGITTAGOUTPUTMESAGEHERE';
   foreach($tag_commit_list as $tag_name => $tag_commit) {
-    $exec = "git for-each-ref --format=\"$format\" refs/tags/" . escapeshellarg($tag_name);
+    $exec = "for-each-ref --format=\"$format\" refs/tags/" . escapeshellarg($tag_name);
   	$logs_tag_msg = _versioncontrol_git_log_exec($exec);
 
     $tag_ops = $repository->loadCommits(array(), array('revision' => $tag_commit));
