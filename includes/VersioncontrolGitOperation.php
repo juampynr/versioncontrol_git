@@ -10,7 +10,7 @@ class VersioncontrolGitOperation extends VersioncontrolOperation {
 
   public $merge = FALSE;
 
-  protected function backendInsert() {
+  protected function backendInsert($options) {
     db_insert('versioncontrol_git_operations')
       ->fields(array(
         'vc_op_id' => $this->vc_op_id,
@@ -22,7 +22,7 @@ class VersioncontrolGitOperation extends VersioncontrolOperation {
       ->execute();
   }
 
-  protected function backendUpdate() {
+  protected function backendUpdate($options) {
     db_update('versioncontrol_git_operations')
       ->fields(array(
         'author_name' => $this->author_name,
@@ -34,7 +34,7 @@ class VersioncontrolGitOperation extends VersioncontrolOperation {
       ->execute();
   }
 
-  protected function backendDelete() {
+  protected function backendDelete($options) {
     db_delete('versioncontrol_git_operations')
       ->condition('vc_op_id', $this->vc_op_id)
       ->execute();
