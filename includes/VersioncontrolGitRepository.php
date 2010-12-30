@@ -2,8 +2,6 @@
 
 class VersioncontrolGitRepository extends VersioncontrolRepository {
 
-  public $vcs = 'git';
-
   /**
    * State flag indicating whether or not the GIT_DIR variable has been pushed
    * into the environment.
@@ -108,12 +106,12 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       $this->setEnv();
     }
     $logs = array();
-    $git_bin = escapeshellarg(variable_get('versioncontrol_git_binary_path', 'git'));
+    $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
     if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
       watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
       return array();
     }
-    exec("$git_bin $command", $logs);
+    exec(escapeshellcmd("$git_bin $command"), $logs);
     array_unshift($logs, '');
     reset($logs); // Reset the array pointer, so that we can use next().
     return $logs;
@@ -131,12 +129,12 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       $this->setEnv();
     }
     $logs = array();
-    $git_bin = escapeshellarg(variable_get('versioncontrol_git_binary_path', 'git'));
+    $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
     if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
       watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
       return FALSE;
     }
-    exec("$git_bin ls-files", $logs, $shell_return);
+    exec(escapeshellcmd("$git_bin ls-files"), $logs, $shell_return);
     return $shell_return == 0;
   }
 

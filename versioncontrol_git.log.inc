@@ -132,12 +132,12 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
  */
 function _versioncontrol_git_log_exec($command) {
   $logs = array();
-  $git_bin = escapeshellcmd(variable_get('versioncontrol_git_binary_path', 'git'));
+  $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
   if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
     watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
     return array();
   }
-  exec("$git_bin $command", $logs);
+  exec(escapeshellcmd("$git_bin $command"), $logs);
   array_unshift($logs, ''); // FIXME doing it this way is just wrong.
   reset($logs); // Reset the array pointer, so that we can use next().
   return $logs;
