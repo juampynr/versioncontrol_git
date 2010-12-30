@@ -110,7 +110,7 @@ function _versioncontrol_git_binary_check_path($path) {
   if ($path == 'git') {
     $path = exec('which git', $output, $return);
     if (!empty($return)) {
-      $errors[] = t('No binary path was specified at admin/settings/versioncontrol-settings, and a git binary was not found in the PATH.');
+      $errors[] = t('No binary path was specified at admin/settings/versioncontrol-settings, and a git binary was not found on the $PATH.');
       return $errors;
     }
   }
