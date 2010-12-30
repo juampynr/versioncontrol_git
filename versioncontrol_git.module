@@ -108,7 +108,11 @@ function _versioncontrol_git_binary_check_path($path) {
   $errors = array();
   // Special case for using evironment $PATH to determine git executable.
   if ($path == 'git') {
-    $path = system('which git');
+    $path = exec('which git', $output, $return);
+    if (!empty($return)) {
+      $errors[] = t('No binary path was specified at admin/settings/versioncontrol-settings, and a git binary was not found in the PATH.');
+      return $errors;
+    }
   }
   if (!is_file($path)) {
     $errors[] = t('The specified git path %file does not exist.', array('%file' => $path));
