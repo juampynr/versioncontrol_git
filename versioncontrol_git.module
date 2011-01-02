@@ -14,10 +14,6 @@
  */
 define('GIT_NULL_REV', '0000000000000000000000000000000000000000');
 
-// Update methods.
-define('VERSIONCONTROL_GIT_UPDATE_CRON', 0);
-define('VERSIONCONTROL_GIT_UPDATE_XGIT', 1);
-
 // The admin and user edit pages.
 require_once drupal_get_path('module', 'versioncontrol_git') .'/versioncontrol_git.admin.inc';
 
