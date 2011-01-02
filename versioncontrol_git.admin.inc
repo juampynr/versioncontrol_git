@@ -53,8 +53,9 @@ function versioncontrol_git_repository_validate($form, &$form_state) {
   // create a non-in-db-repo just for the validation
   $repo = new VersioncontrolGitRepository(new VersioncontrolGitBackend());
   $repo->root = $form_state['values']['root'];
-  if (!$repo->isValidGitRepo()) {
-    form_set_error('root', t('The specified path is not a valid Git bare repository.'));
+  $errors = $repo->isValidGitRepo();
+  if (!empty($errors)) {
+    form_set_error('root', theme('item_list', $errors));
   }
 }
 

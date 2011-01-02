@@ -22,8 +22,9 @@
  * done
  */
 function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &$repository) {
-  if (!$repository->isValidGitRepo()) {
-    drupal_set_message(t('The repository %name at <code>@root</code> is not a valid Git bare repository.', array('%name' => $repository->name, '@root' => $repository->root)), 'error');
+  $errors = $repository->isValidGitRepo();
+  if (!empty($errors)) {
+    drupal_set_message(theme('item_list', $errors), 'error');
     return FALSE;
   }
 
