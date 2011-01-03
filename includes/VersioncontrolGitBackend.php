@@ -2,6 +2,8 @@
 
 class VersioncontrolGitBackend extends VersioncontrolBackend {
 
+  public $type = 'git';
+
   public $classesEntities = array(
       'repo' => 'VersioncontrolGitRepository',
       'account' => 'VersioncontrolGitAccount',
