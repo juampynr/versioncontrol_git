@@ -97,6 +97,19 @@ function _versioncontrol_git_get_branch_intersect($repository, $item1, $item2) {
   return array_pop($branches1); // We don't know any keys in $branches, so we use array_pop here. Also it'll return NULL if needed
 }
 
+
+/**
+ * Implementation of hook_views_api().
+ *
+ * @return array
+ */
+function versioncontrol_git_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'commitlog'). '/includes',
+  );
+}
+
 /**
  * Validate the path supplied for the git binary.
  */
