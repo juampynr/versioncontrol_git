@@ -68,14 +68,13 @@ function versioncontrol_git_cron() {
 }
 
 /**
- * Implementation of hook_views_api().
+ * Implements hook_views_api().
  *
- * @return array
  */
 function versioncontrol_git_views_api() {
   return array(
     'api' => 2,
-    'path' => drupal_get_path('module', 'commitlog'). '/includes',
+    'path' => drupal_get_path('module', 'versioncontrol_git'). '/includes',
   );
 }
 
