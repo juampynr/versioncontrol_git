@@ -51,6 +51,35 @@ function versioncontrol_git_views_default_views() {
       'field' => 'attribution',
       'relationship' => 'none',
     ),
+    'name' => array(
+      'label' => 'Repository Name',
+      'alter' => array(
+        'alter_text' => 0,
+        'text' => '',
+        'make_link' => 0,
+        'path' => '',
+        'link_class' => '',
+        'alt' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'target' => '',
+        'help' => '',
+        'trim' => 0,
+        'max_length' => '',
+        'word_boundary' => 1,
+        'ellipsis' => 1,
+        'html' => 0,
+        'strip_tags' => 0,
+      ),
+      'empty' => '',
+      'hide_empty' => 0,
+      'empty_zero' => 0,
+      'exclude' => 1,
+      'id' => 'name',
+      'table' => 'versioncontrol_repositories',
+      'field' => 'name',
+      'relationship' => 'none',
+    ),
     'vc_op_id' => array(
       'label' => 'Operation ID',
       'alter' => array(
@@ -109,7 +138,7 @@ function versioncontrol_git_views_default_views() {
       'empty' => '',
       'hide_empty' => 0,
       'empty_zero' => 0,
-      'date_format' => 'time ago',
+      'date_format' => 'small',
       'custom_date_format' => '2',
       'exclude' => 1,
       'id' => 'date',
@@ -149,7 +178,7 @@ function versioncontrol_git_views_default_views() {
     'nothing' => array(
       'label' => '',
       'alter' => array(
-        'text' => '<div class="commit-global">Commit <strong>[revision]</strong> [attribution] [date]</div>',
+        'text' => '<div class="commit-global">Commit <strong>[revision]</strong> [attribution] at [date] in repository \'[name]\'</div>',
         'make_link' => 0,
         'path' => '#',
         'link_class' => 'global-author',
@@ -282,9 +311,11 @@ function versioncontrol_git_views_default_views() {
   $handler->override_option('cache', array(
     'type' => 'none',
   ));
+  $handler->override_option('use_pager', '1');
   $handler->override_option('style_options', array(
     'grouping' => 'date_1',
   ));
+
 
   $views[$view->name] = $view;
 }
