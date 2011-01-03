@@ -15,6 +15,12 @@ class VersioncontrolGitBackend extends VersioncontrolBackend {
     'operation' => 'VersioncontrolGitOperationController',
   );
 
+  public $defaultViews = array(
+    'global_commit_view' => 'vc_git_global_commits',
+    'user_commit_view' => 'vc_git_user_commits',
+    'repository_commit_view' => 'vc_git_repository_commits',
+  );
+
   public function __construct() {
     parent::__construct();
     $this->name = 'Git';
