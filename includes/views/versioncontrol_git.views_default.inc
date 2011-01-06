@@ -981,5 +981,7 @@ function versioncontrol_git_views_default_views() {
     'grouping' => 'date_1',
   ));
 
+  $views[$view->name] = $view;
+
   return $views;
 }
