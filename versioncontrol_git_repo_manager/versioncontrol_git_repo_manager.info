@@ -1,0 +1,8 @@
+; $Id$
+name = "Git Repository Manager"
+description = "Provides ."
+core=6.x
+dependencies[] = versioncontrol_git
+dependencies[] = versioncontrol_project
+dependencies[] = drupal_queue
+package = Version Control
