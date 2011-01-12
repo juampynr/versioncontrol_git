@@ -71,6 +71,40 @@ function versioncontrol_git_repo_manager_nodeapi(&$node, $op, $a3 = NULL, $a4 = 
 }
 
 /**
+ * Implements hook_cron_queue_info().
+ *
+ * Inform the job queueing system about our worker callback.
+ */
+function versioncontrol_git_repo_manager_cron_queue_info() {
+  $queues = array();
+
+  $queues['versioncontrol_git_repo_manager'] = array(
+    'worker callback' => 'versioncontrol_git_repo_manager_run_worker',
+    'time' => 15,
+  );
+
+  return $queues;
+}
+
+/**
+ * Worker callback for the versioncontrol_git_repo_manager queue.
+ *
+ * @param array $data
+ */
+function versioncontrol_git_repo_manager_run_worker($data) {
+  switch ($data['operation']) {
+    case 'create':
+      _versioncontrol_git_repo_manager_create_git_repository($data['data']);
+      // drush_print(t("Job processed. Git repository created at path @path.\n", array('@path' => $item->data['data']['repository_data']['root'])));
+      break;
+    case 'delete':
+      _versioncontrol_git_repo_manager_delete_git_repository($data['data']);
+      // drush_print(t("Job processed. Git repository @repo_id deleted.\n", array('@repo_id' => $item->data['data']['repo_id'])));
+      break;
+  }
+}
+
+/**
  * Creates a git repository on disk.
  *
  * Note: This function should never be called by apache.  It should
