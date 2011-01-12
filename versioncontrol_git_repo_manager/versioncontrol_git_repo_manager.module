@@ -126,8 +126,11 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
   $repository_path = $data['repository_data']['root'];
 
   // Create the repository on disk
-  `mkdir $repository_path`;
-  `git init --bare $repository_path`;
+  exec('git init --bare ' . escapeshellarg($repository_path), $output, $return);
+  if ($return) {
+    // init failed for some reason, throw exception
+    throw new Exception('Git repository initialization failed with code ' . $return . ' and error message \'' . implode(' ', $output) . '\'', E_ERROR);
+  }
 
   // Create, configure and save versioncontrol entity.
   $backend = versioncontrol_get_backends($data['repository_data']['vcs']);
@@ -151,10 +154,16 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
  *   );
  */
 function _versioncontrol_git_repo_manager_delete_git_repository($data) {
-  // Do we want to relate repositories to projects in a more robust way than by magical formula around uri?
   $repository = versioncontrol_repository_load($data['repo_id']);
-  $result = `rm -rf {$repository->root}`;
+  exec('rm -rf ' . escapeshellarg($repository->root), $output, $return);
+  if ($return) {
+    // Deletion failed, throw an error.
+    throw new Exception('Git repository deletion failed with code ' . $return . ' and error message \'' . implode(' ', $output) . '\'', E_ERROR);
+  }
+
   $repository->delete();
+
+  // Allow modules to respond to the deletion of this repository.
   module_invoke_all('versioncontrol_git_repo_manager_post_delete', $data, $repository);
 }
 
