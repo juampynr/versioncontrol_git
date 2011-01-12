@@ -174,7 +174,10 @@ function versioncontrol_git_repo_manager_versioncontrol_git_repo_manager_post_cr
   if (module_exists('versioncontrol_project') && variable_get('versioncontrol_git_repo_manager_manage_repos_for_projects', FALSE)) {
     if (isset($data['nid']) && is_numeric($data['nid'])) {
       // TODO: test associating the repo with the project.
-      db_query("UPDATE {versioncontrol_project_projects} set repo_id=%d WHERE nid=%d", $repository->repo_id, $data['nid']);
+      db_merge('versioncontrol_project_projects')
+        ->key(array('nid' => $data['nid']))
+        ->fields(array('repo_id' => $repository->repo_id))
+        ->execute();
     }
   }
 }
