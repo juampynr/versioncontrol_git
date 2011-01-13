@@ -2,6 +2,43 @@
 
 class VersioncontrolGitItem extends VersioncontrolItem {
 
+  public $blob_hash;
+
+  protected function backendInsert($options) {
+    if (empty($this->blob_hash)) {
+      // blob hash is empty at deleting a file
+      return;
+    }
+    db_insert('versioncontrol_git_item_revisions')
+      ->fields(array(
+        'item_revision_id' => $this->item_revision_id,
+        'blob_hash' => $this->blob_hash,
+      ))
+      ->execute();
+  }
+
+  protected function backendUpdate($options) {
+    if (empty($this->blob_hash)) {
+      // blob hash is empty at deleting a file
+      db_delete('versioncontrol_git_item_revisions')
+        ->condition('item_revision_id', $this->item_revision_id)
+        ->execute();
+      return;
+    }
+    db_update('versioncontrol_git_item_revisions')
+      ->fields(array(
+        'blob_hash' => $this->blob_hash,
+      ))
+      ->condition('item_revision_id', $this->item_revision_id)
+      ->execute();
+  }
+
+  protected function backendDelete($options) {
+    db_delete('versioncontrol_git_item_revisions')
+      ->condition('item_revision_id', $this->item_revision_id)
+      ->execute();
+  }
+
   /**
    * Implementation abstract method.
    */

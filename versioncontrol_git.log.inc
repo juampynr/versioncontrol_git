@@ -257,6 +257,12 @@ function _versioncontrol_git_parse_items(&$logs, &$line, $data, $parents) {
       $op_items[$path]->line_changes_added = $matches[1];
       $op_items[$path]->line_changes_removed = $matches[2];
     }
+
+    // extract blob
+    $command = 'ls-tree -r ' . escapeshellarg($data['revision']) . ' ' . escapeshellarg($matches[3]);
+    $lstree_lines = _versioncontrol_git_log_exec($command);
+    $blob_hash = _versioncontrol_git_parse_item_blob($lstree_lines);
+    $op_items[$path]->blob_hash = $blob_hash;
   } while (($line = next($logs)) !== FALSE);
 
   // Parse file actions.
@@ -267,6 +273,11 @@ function _versioncontrol_git_parse_items(&$logs, &$line, $data, $parents) {
     // We also can get 'mode' here if someone changes the file permissions.
     if ($matches[1] == 'create') {
       $op_items['/'. $matches[4]]->action = VERSIONCONTROL_ACTION_ADDED;
+      // extract blob
+      $command = 'ls-tree -r ' . escapeshellarg($data['revision']) . ' ' . escapeshellarg($matches[4]);
+      $lstree_lines = _versioncontrol_git_log_exec($command);
+      $blob_hash = _versioncontrol_git_parse_item_blob($lstree_lines);
+      $op_items['/'. $matches[4]]->blob_hash = $blob_hash;
     }
     else if ($matches[1] == 'delete') {
       $op_items['/'. $matches[4]]->action = VERSIONCONTROL_ACTION_DELETED;
@@ -281,6 +292,19 @@ function _versioncontrol_git_parse_items(&$logs, &$line, $data, $parents) {
     }
   }
   return $op_items;
+}
+
+/**
+ * Parse ls-tree with one commit hash and one item.
+ */
+function _versioncontrol_git_parse_item_blob($lines) {
+  $line = next($lines);
+  // output: <mode> SP <type> SP <object> TAB <file>
+  $info = explode("\t", $line);
+  $info = array_shift($info);
+  $info = explode(' ', $info);
+  $blob_hash = array_pop($info);
+  return $blob_hash;
 }
 
 /**

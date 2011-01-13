@@ -68,6 +68,26 @@ function versioncontrol_git_schema() {
     'primary key' => array('vc_op_id'),
   );
 
+  $schema['versioncontrol_git_item_revisions'] = array(
+    'description' => 'A one-to-one table extending {versioncontrol_item_revisions} with some additional git-specific data.',
+    'fields' => array(
+      'item_revision_id' => array(
+        'description' => 'Foreign key to {versioncontrol_item_revisions}.item_revision_id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'blob_hash' => array(
+        'description' => 'This item blob hash.',
+        'type' => 'char',
+        'length' => 40,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('item_revision_id'),
+  );
+
   return $schema;
 }
 
@@ -116,6 +136,57 @@ function versioncontrol_git_update_6201() {
   );
 
   db_create_table($ret, 'versioncontrol_git_operations', $schema);
+
+  return $ret;
+}
+
+/**
+ * Add versioncontrol_git_item_revisions table.
+ */
+function versioncontrol_git_update_6202() {
+  $ret = array();
+
+  $versioncontrol_git_item_revisions_schema = array(
+    'description' => 'A one-to-one table extending {versioncontrol_item_revisions} with some additional git-specific data.',
+    'fields' => array(
+      'item_revision_id' => array(
+        'description' => 'Foreign key to {versioncontrol_item_revisions}.item_revision_id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'blob_hash' => array(
+        'description' => 'This item blob hash.',
+        'type' => 'char',
+        'length' => 40,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('item_revision_id'),
+  );
+
+  //db_create_table($ret, 'versioncontrol_git_item_revisions', $versioncontrol_git_item_revisions_schema);
+
+  module_load_include('inc', 'versioncontrol_git', 'versioncontrol_git.log');
+
+  $git_backend = versioncontrol_get_backends('git', TRUE);
+  $repositories = $git_backend->loadEntities('repo', FALSE, array('vcs' => 'git'));
+
+  foreach ($repositories as $repo) {
+    $root = escapeshellcmd($repo->root);
+    putenv("GIT_DIR=$root");
+    $item_revisions = $repo->getBackend()->loadEntities('item', array(), array('repo_id' => $repo->repo_id));
+    foreach ($item_revisions as $item_revision) {
+      $command = 'ls-tree -r ' . escapeshellarg($item_revision->revision) . ' ' . escapeshellarg(substr($item_revision->path, 1));
+      $logs = _versioncontrol_git_log_exec($command);
+      $blob_hash = _versioncontrol_git_parse_item_blob($logs);
+      if (!empty($blob_hash)) {
+        // blob is empty when at delete
+        db_query("INSERT INTO {versioncontrol_git_item_revisions}(item_revision_id, blob_hash) VALUES (%d, '%s')", array($item_revision->item_revision_id, $blob_hash));
+      }
+    }
+  }
 
   return $ret;
 }
