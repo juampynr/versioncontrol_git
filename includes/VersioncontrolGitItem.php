@@ -64,7 +64,7 @@ class VersioncontrolGitItem extends VersioncontrolItem {
       return;
     }
     if (!empty($this->source_item_revision_id)) {
-      $this->sourceItem = $this->backend->loadEntity('item', array($this->source_item_revision_id));
+      $this->sourceItem = $this->backend->loadEntity('item', $this->source_item_revision_id, array(), array('may cache' => FALSE));
       return;
     }
     if ($this->sourceItem instanceof VersioncontrolItem) {
