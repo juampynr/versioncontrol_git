@@ -110,7 +110,6 @@ function drush_versioncontrol_git_repo_manager_git_queue_process() {
     $data = $item->data;
     switch($data['operation']) {
       case 'create':
-        $queue->releaseItem($item);
         _versioncontrol_git_repo_manager_create_git_repository($item->data['data']);
         drush_print(t("Job processed.  Git repository created at path @path.\n", array('@path' => $item->data['data']['repository_data']['root'])));
         break;
@@ -119,7 +118,6 @@ function drush_versioncontrol_git_repo_manager_git_queue_process() {
         drush_print(t("Job processed.  Git repository @repo_id deleted.\n", array('@repo_id' => $item->data['data']['repo_id'])));
         break;
     }
-    $queue->releaseItem($item);
     $queue->deleteItem($item);
   }
 }
