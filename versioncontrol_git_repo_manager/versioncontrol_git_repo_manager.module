@@ -80,7 +80,7 @@ function versioncontrol_git_repo_manager_cron_queue_info() {
 
   $queues['versioncontrol_git_repo_manager'] = array(
     'worker callback' => 'versioncontrol_git_repo_manager_run_worker',
-    'time' => 15,
+    'time' => 0,
   );
 
   return $queues;
