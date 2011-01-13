@@ -106,3 +106,12 @@ function _versioncontrol_git_binary_check_path($path) {
   }
   return $errors;
 }
+
+/**
+ * Implementation of ctools hook_ctools_plugin_directory().
+ */
+function versioncontrol_git_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'versioncontrol') {
+    return "includes/plugins/$plugin";
+  }
+}
