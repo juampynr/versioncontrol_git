@@ -136,7 +136,6 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
 
   // Create, configure and save versioncontrol entity.
   $backend = versioncontrol_get_backends($data['repository_data']['vcs']);
-  $backend->buildEntity('repo', $data['repository_data']);
   $repository = $backend->buildEntity('repo', $data['repository_data']);
   $repository->insert();
 
