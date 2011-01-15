@@ -166,7 +166,7 @@ function versioncontrol_git_update_6202() {
     'primary key' => array('item_revision_id'),
   );
 
-  //db_create_table($ret, 'versioncontrol_git_item_revisions', $versioncontrol_git_item_revisions_schema);
+  db_create_table($ret, 'versioncontrol_git_item_revisions', $versioncontrol_git_item_revisions_schema);
 
   module_load_include('inc', 'versioncontrol_git', 'versioncontrol_git.log');
 
