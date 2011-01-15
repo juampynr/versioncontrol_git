@@ -41,16 +41,22 @@ function versioncontrol_git_repo_manager_nodeapi(&$node, $op, $a3 = NULL, $a4 = 
 
           if ($op == 'insert') {
             // Setup the repository data.
-            $data['name'] = $node->title;
+            $data['name'] = $node->project['uri'];
             $data['root'] = $repo_root;
             $data['vcs'] = 'git';
             $data['backend'] = 'git';
+            $data['plugins'] = array(
+              'auth_handler' => 'account',
+              'author_mapper' => 'drupalorg_mapper',
+              'committer_mapper' => 'drupalorg_mapper',
+            );
             // Verify that this will be carried all the way to our hook inside the repo object.
             $job = array(
               'operation' => 'create',
               'data' => array(
                 'repository_data' => $data,
                 'nid' => $node->nid,
+                'uid' => $node->uid,
               ),
             );
             drupal_set_message(t('Your git repository (%repo) has been enqueued for creation.', array('%repo' => $node->project['uri'] . '.git')));
@@ -138,6 +144,23 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
   $backend = versioncontrol_get_backends($data['repository_data']['vcs']);
   $repository = $backend->buildEntity('repo', $data['repository_data']);
   $repository->insert();
+
+  ctools_include('plugins');
+  ctools_plugin_load_class('versioncontrol', 'vcs_auth', 'account', 'handler');
+  $auth_data = array(
+    'access' => VersioncontrolAuthHandlerMappedAccounts::ALL,
+    'branch_create' => VersioncontrolAuthHandlerMappedAccounts::DENY,
+    'branch_update' => VersioncontrolAuthHandlerMappedAccounts::DENY,
+    'branch_delete' => VersioncontrolAuthHandlerMappedAccounts::DENY,
+    'tag_create' => VersioncontrolAuthHandlerMappedAccounts::DENY,
+    'tag_update' => VersioncontrolAuthHandlerMappedAccounts::DENY,
+    'tag_delete' => VersioncontrolAuthHandlerMappedAccounts::DENY,
+    'per-label' => array()
+  );
+
+  $auth_handler = $repository->getAuthHandler();
+  $auth_handler->setUserData($data['uid'], $auth_data);
+  $auth_handler->save();
 
   // Allow modules to respond to the newly created repository object.
   module_invoke_all('versioncontrol_git_repo_manager_post_create', $data, $repository);
