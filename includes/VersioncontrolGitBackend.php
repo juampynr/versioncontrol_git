@@ -13,6 +13,7 @@ class VersioncontrolGitBackend extends VersioncontrolBackend {
 
   public $classesControllers = array(
     'operation' => 'VersioncontrolGitOperationController',
+    'item' => 'VersioncontrolGitItemController',
   );
 
   public $defaultViews = array(

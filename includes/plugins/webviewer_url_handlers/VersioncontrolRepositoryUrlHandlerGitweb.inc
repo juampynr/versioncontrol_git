@@ -45,6 +45,10 @@ class VersioncontrolRepositoryUrlHandlerGitweb extends VersioncontrolRepositoryU
    * content.
    */
   public function getItemViewUrl(&$item) {
+    // Removed items has not blob hash
+    if (is_null($item->blob_hash)) {
+      return '';
+    }
     $placeholders = array(
       '%repo_name' => $this->repository->name,
       '%path'     => substr($item->path, 1),
