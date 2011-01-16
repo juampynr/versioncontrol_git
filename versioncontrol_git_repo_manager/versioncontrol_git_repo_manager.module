@@ -72,7 +72,13 @@ function versioncontrol_git_repo_manager_nodeapi(&$node, $op, $a3 = NULL, $a4 = 
           }
           drupal_queue_include();
           $queue = DrupalQueue::get('versioncontrol_git_repo_manager');
-          $queue->createItem($job);
+          if (!$queue->createItem($job)) {
+            $error_info = array(
+              '%nid' => $node->nid,
+              '%op' => $op,
+            );
+            watchdog('versioncontrol_git_repo_manager', t("Failed to enqueue job for node '%nid', operation '%op'.", $error_info));
+          }
       }
     }
   }
