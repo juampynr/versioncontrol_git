@@ -152,6 +152,10 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
   $repository = $backend->buildEntity('repo', $data['repository_data']);
   $repository->insert();
 
+  if (empty($repository->repo_id)) {
+    throw new Exception('No repo_id attached to repository after insert; repository insertion failed.', E_ERROR);
+  }
+
   ctools_include('plugins');
   ctools_plugin_load_class('versioncontrol', 'vcs_auth', 'account', 'handler');
   $auth_data = array(
