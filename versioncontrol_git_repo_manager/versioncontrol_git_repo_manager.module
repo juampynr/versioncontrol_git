@@ -49,7 +49,6 @@ function versioncontrol_git_repo_manager_nodeapi(&$node, $op, $a3 = NULL, $a4 = 
               'auth_handler' => 'account',
               'author_mapper' => 'drupalorg_mapper',
               'committer_mapper' => 'drupalorg_mapper',
-              'label_version_mapper' => 'drupalorg_git',
               'webviewer_url_handler' => 'drupalorg_gitweb',
             );
             // Verify that this will be carried all the way to our hook inside the repo object.
