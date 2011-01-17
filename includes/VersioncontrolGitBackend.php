@@ -17,6 +17,9 @@ class VersioncontrolGitBackend extends VersioncontrolBackend {
   );
 
   public $defaultViews = array(
+    'project_global_commit_view' => 'vc_git_project_global_commits',
+    'project_user_commit_view' => 'vc_git_project_user_commits',
+    'project_commit_view' => 'vc_git_project_commit_view',
     'global_commit_view' => 'vc_git_global_commits',
     'user_commit_view' => 'vc_git_user_commits',
     'repository_commit_view' => 'vc_git_repository_commits',
