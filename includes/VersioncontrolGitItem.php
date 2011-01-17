@@ -69,7 +69,7 @@ class VersioncontrolGitItem extends VersioncontrolItem {
     }
     if ($this->sourceItem instanceof VersioncontrolItem) {
       // do not insert a duplicate item revision
-      $db_item = $this->backend->loadEntity('item', array(), array('revision' => $this->sourceItem->revision, 'path' => $this->sourceItem->path));
+      $db_item = $this->backend->loadEntity('item', array(), array('revision' => $this->sourceItem->revision, 'path' => $this->sourceItem->path), array('may cache' => FALSE));
       if (is_subclass_of($db_item, 'VersioncontrolItem')) {
         $this->sourceItem = $db_item;
       }
