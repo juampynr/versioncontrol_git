@@ -12,5 +12,3 @@ files[] = includes/VersioncontrolGitItem.php
 files[] = includes/VersioncontrolGitItemController.php
 files[] = includes/VersioncontrolGitOperation.php
 files[] = includes/VersioncontrolGitOperationController.php
-files[] = includes/VersioncontrolGitLogParser.php
-files[] = glip/lib/git.class.php
