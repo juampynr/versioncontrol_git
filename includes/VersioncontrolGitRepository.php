@@ -106,11 +106,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       $this->setEnv();
     }
     $logs = array();
-    $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
-    if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
-      watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
-      return array();
-    }
+    $git_bin = _versioncontrol_git_get_binary_path();
     exec(escapeshellcmd("$git_bin $command"), $logs);
     array_unshift($logs, '');
     reset($logs); // Reset the array pointer, so that we can use next().
@@ -129,16 +125,13 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
       $this->setEnv();
     }
     $logs = array();
-    $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
-    if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
-      watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
-      return $errors;
-    }
+    $git_bin = _versioncontrol_git_get_binary_path();
     exec(escapeshellcmd("$git_bin ls-files"), $logs, $shell_return);
     if ($shell_return != 0) {
-      $errors[] = t('The repository %name at <code>@root</code> is not a valid Git bare repository.', array('%name' => $this->name, '@root' => $this->root));
+      $errors = array(t('The repository %name at <code>@root</code> is not a valid Git bare repository.', array('%name' => $this->name, '@root' => $this->root)));
+      return $errors;
     }
-    return $errors;
+    return TRUE;
   }
 
 }
