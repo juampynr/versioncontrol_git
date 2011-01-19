@@ -41,7 +41,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   // Fetch branches from the repo and load them from the db.
   $branches_in_repo = $repository->fetchBranches();
-  $branches_in_db = $repository->loadBranches();
+  $branches_in_db = $repository->loadBranches(array(), array(), array('may cache' => FALSE));
   $branches_in_db_by_name = array();
   foreach ($branches_in_db as $branch) { // Branches get keyed on id; key on name instead.
     $branches_in_db_by_name[$branch->name] = $branch;
@@ -78,7 +78,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   // Fetch commits from the repo and load them from the db.
   $commits_in_repo_hashes = $repository->fetchCommits();
-  $commits_in_db = $repository->loadCommits();
+  $commits_in_db = $repository->loadCommits(array(), array(), array('may cache' => FALSE));
   $commits_in_db_hashes = array();
   foreach ($commits_in_db as $commit) {
     $commits_in_db_hashes[] = $commit->revision;
@@ -96,7 +96,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
   // Add a new branch to all commits contained in that branch.
   foreach ($branches_new as $branch_new) {
     $commit_ids = _versioncontrol_git_log_get_commits_in_branch($branch_new);
-    $commits = $repository->loadCommits(array(), array('revision' => $commit_ids));
+    $commits = $repository->loadCommits(array(), array('revision' => $commit_ids), array('may cache' => FALSE));
     _versioncontrol_git_log_attach_branch_to_commits($branches_in_db_by_name[$branch_new->name], $commits);
   }
 
