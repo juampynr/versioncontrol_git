@@ -116,8 +116,8 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   /**
    * Verify if the repository root points to a valid Git repository.
    *
-   * @return array
-   *   An array with the errors why this repository is invalid.
+   * @return boolean
+   *   TRUE if the repository path is a bare Git Repository.
    */
   public function isValidGitRepo() {
     // do not use exec() method to get the shell return code
@@ -128,8 +128,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
     $git_bin = _versioncontrol_git_get_binary_path();
     exec(escapeshellcmd("$git_bin ls-files"), $logs, $shell_return);
     if ($shell_return != 0) {
-      $errors = array(t('The repository %name at <code>@root</code> is not a valid Git bare repository.', array('%name' => $this->name, '@root' => $this->root)));
-      return $errors;
+      return FALSE;
     }
     return TRUE;
   }
