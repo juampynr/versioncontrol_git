@@ -144,10 +144,6 @@ function versioncontrol_git_repo_activity_stream_worker_callback($data) {
 function versioncontrol_git_repo_parsing_worker_callback($data) {
   $repo_name = $data['repository'];
 
-  // Temporary until the daemon fixes its shit and gives good repo names.
-  $parts = explode('/', $repo_name);
-  $repo_name = substr(array_pop($parts), 0, -4);
-
   if (empty($repo_name)) {
     throw new Exception('No repository name passed in for parsing job.');
   }
