@@ -97,6 +97,15 @@ function versioncontrol_git_repo_manager_cron_queue_info() {
     'worker callback' => 'versioncontrol_git_repo_manager_run_worker',
     'time' => 0,
   );
+  $queues['versioncontrol_git_repo_parsing'] = array(
+    'worker callback' => 'versioncontrol_git_repo_parsing_worker_callback',
+    'time' => 0,
+  );
+  $queues['versioncontrol_git_repo_activity_stream'] = array(
+    'worker callback' => 'versioncontrol_git_repo_activity_stream_worker_callback',
+    'time' => 0,
+  );
+
 
   return $queues;
 }
@@ -117,6 +126,30 @@ function versioncontrol_git_repo_manager_run_worker($data) {
       // drush_print(t("Job processed. Git repository @repo_id deleted.\n", array('@repo_id' => $item->data['data']['repo_id'])));
       break;
   }
+}
+
+/**
+ * Worker callback for the versioncontrol_git_repo_activity_stream queue.
+ *
+ * @param array $data
+ */
+function versioncontrol_git_repo_activity_stream_worker_callback($data) {
+}
+
+/**
+ * Worker callback for the versioncontrol_git_repo_parsing queue.
+ *
+ * @param array $data
+ */
+function versioncontrol_git_repo_parsing_worker_callback($data) {
+  $repo_id = $data['repository'];
+  if (empty($repo_id)) {
+    throw new Exception('No repository id passed in for parsing job.');
+  }
+
+  $repository = versioncontrol_repository_load($repo_id);
+  // Perform a full sync. This is pretty wasteful and needs improving.
+  $repository->fetchLogs();
 }
 
 /**
