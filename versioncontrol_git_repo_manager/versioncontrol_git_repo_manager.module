@@ -142,12 +142,21 @@ function versioncontrol_git_repo_activity_stream_worker_callback($data) {
  * @param array $data
  */
 function versioncontrol_git_repo_parsing_worker_callback($data) {
-  $repo_id = $data['repository'];
-  if (empty($repo_id)) {
-    throw new Exception('No repository id passed in for parsing job.');
+  $repo_name = $data['repository'];
+
+  // Temporary until the daemon fixes its shit and gives good repo names.
+  $parts = explode('/', $repo_name);
+  $repo_name = substr(array_pop($parts), 0, -4);
+
+  if (empty($repo_name)) {
+    throw new Exception('No repository name passed in for parsing job.');
   }
 
-  $repository = versioncontrol_repository_load($repo_id);
+  $repositories = versioncontrol_repository_load_multiple(array(), array('name' => $repo_name));
+  $repository = reset($repositories);
+  if (!$repository instanceof VersioncontrolGitRepository) {
+    throw new Exception("No repository could be found with name '$repo_name'.");
+  }
   // Perform a full sync. This is pretty wasteful and needs improving.
   $repository->fetchLogs();
 }
