@@ -183,7 +183,7 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
   $repository_path = $data['repository_data']['root'];
 
   // Create the repository on disk
-  exec('git init --bare ' . escapeshellarg($repository_path), $output, $return);
+  exec('git --git-dir ' . escapeshellarg($repository_path) . ' init --template ' . drupal_get_path('module', 'drupalorg_git_gateway') . '/templates', $output, $return);
   if ($return) {
     // init failed for some reason, throw exception
     throw new Exception('Git repository initialization failed with code ' . $return . ' and error message \'' . implode(' ', $output) . '\'', E_ERROR);
