@@ -64,7 +64,7 @@ function versioncontrol_git_views_data() {
       'additional fields' => array(
         'author_uid' => array('table' => 'versioncontrol_operations', 'field' => 'author_uid'),
         'committer_uid' => array('table' => 'versioncontrol_operations', 'field' => 'committer_uid'),
-        'committer' => array('table' => 'versioncontrol_operations', 'field' => 'committer'),
+        'committer' => array('table' => 'versioncontrol_git_operations', 'field' => 'committer_name'),
       ),
     ),
     'sort' => array(
