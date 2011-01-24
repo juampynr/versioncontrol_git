@@ -341,7 +341,7 @@ $handler->override_option('arguments', array(
     'breadcrumb' => '',
     'default_argument_type' => 'fixed',
     'default_argument' => '',
-    'validate_type' => 'none',
+    'validate_type' => 'user',
     'validate_fail' => 'not found',
     'break_phrase' => 0,
     'not' => 0,
