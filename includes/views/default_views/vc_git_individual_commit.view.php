@@ -37,7 +37,7 @@ $handler->override_option('fields', array(
     'empty_zero' => 0,
     'exclude' => 1,
     'id' => 'attribution',
-    'table' => 'versioncontrol_operations',
+    'table' => 'versioncontrol_git_operations',
     'field' => 'attribution',
     'relationship' => 'none',
   ),
