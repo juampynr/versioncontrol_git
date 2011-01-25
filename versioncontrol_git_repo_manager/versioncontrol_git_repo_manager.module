@@ -92,6 +92,35 @@ function versioncontrol_git_repo_manager_nodeapi(&$node, $op, $a3 = NULL, $a4 = 
 }
 
 /**
+ * Implements hook_project_promote_sandbox().
+ *
+ * Project has been promoted to a full project, relocate it on disk.
+ */
+function versioncontrol_git_repo_manager_project_promote_sandbox($project) {
+  if (empty($project->versioncontrol_project['repo']) || !$project->versioncontrol_project['repo'] instanceof VersioncontrolGitRepository) {
+    return;
+  }
+
+  $repo = $project->versioncontrol_project['repo'];
+  $data = array(
+    'repo_id' => $repo->repo_id,
+    'uid' => $project->uid,
+    'shortname' => $project->project['uri'],
+  );
+
+  $job = array(
+    'operation' => 'promote',
+    'data' => $data,
+  );
+
+  drupal_queue_include();
+  $queue = DrupalQueue::get('versioncontrol_git_repo_manager');
+  if (!$queue->createItem($job)) {
+    watchdog('versioncontrol_git_repo_manager', t("Failed to enqueue promotion of sandbox '%shortname'.", array('%shortname' => $project->uri)));
+  }
+}
+
+/**
  * Implements hook_cron_queue_info().
  *
  * Inform the job queueing system about our worker callback.
@@ -112,7 +141,6 @@ function versioncontrol_git_repo_manager_cron_queue_info() {
     'time' => 0,
   );
 
-
   return $queues;
 }
 
@@ -126,6 +154,9 @@ function versioncontrol_git_repo_manager_run_worker($data) {
     case 'create':
       _versioncontrol_git_repo_manager_create_git_repository($data['data']);
       // drush_print(t("Job processed. Git repository created at path @path.\n", array('@path' => $item->data['data']['repository_data']['root'])));
+      break;
+    case 'promote':
+      _versioncontrol_git_repo_manager_promote_git_repository($data['data']);
       break;
     case 'delete':
       _versioncontrol_git_repo_manager_delete_git_repository($data['data']);
@@ -220,6 +251,30 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
 
   // Allow modules to respond to the newly created repository object.
   module_invoke_all('versioncontrol_git_repo_manager_post_create', $data, $repository);
+}
+
+/**
+ * Move a git repository on disk to reflect its promotion from a sandbox to
+ * a full project.
+ *
+ * @param array $data
+ */
+function _versioncontrol_git_repo_manager_promote_git_repository($data) {
+  $repo = versioncontrol_repository_load($data['repo_id']);
+  $owner = user_load($data['uid']);
+  $base_path = variable_get('versioncontrol_git_repo_manager_repository_base_path', '/git');
+  $target_path = $base_path . "/project/" . $data['shortname'] . '.git';
+
+  exec('mv ' . escapeshellarg($repo->root) . ' ' . escapeshellarg($target_path), $output, $return);
+
+  if ($return) {
+    // move failed for some reason, throw exception
+    throw new Exception('Moving Git repository from sandbox to full project location failed with code ' . $return . ' and error message \'' . implode(' ', $output) . '\'', E_ERROR);
+  }
+
+  $repo->name = $data['shortname'];
+  $repo->root = $target_path;
+  $repo->save();
 }
 
 /**
