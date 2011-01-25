@@ -37,7 +37,14 @@ function versioncontrol_git_repo_manager_nodeapi(&$node, $op, $a3 = NULL, $a4 = 
           $data = array(
             'project' => $node->project['uri'],
           );
-          $repo_root = variable_get('versioncontrol_git_repo_manager_repository_base_path', '/git') . '/' . $node->project['uri'] . '.git';
+          if ($node->project['sandbox']) {
+            $user = user_load($node->uid);
+            $top_path = "sandbox/{$user->git_username}/{$node->project['uri']}";
+          }
+          else {
+            $top_path = "project/{$node->project['uri']}";
+          }
+          $repo_root = variable_get('versioncontrol_git_repo_manager_repository_base_path', '/git') . '/' . $top_path . '.git';
 
           if ($op == 'insert') {
             // Setup the repository data.
@@ -177,6 +184,7 @@ function _versioncontrol_git_repo_manager_create_git_repository($data) {
   module_invoke_all('versioncontrol_git_repo_manager_pre_create', $data);
   $repository_path = $data['repository_data']['root'];
 
+  exec('mkdir -p ' . escapeshellarg($repository_path));
   // Create the repository on disk
   exec('git --git-dir ' . escapeshellarg($repository_path) . ' init --template ' . drupal_get_path('module', 'drupalorg_git_gateway') . '/templates', $output, $return);
   if ($return) {
