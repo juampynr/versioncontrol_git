@@ -35,6 +35,11 @@ class VersioncontrolRepositoryUrlHandlerGitwebRewrite extends VersioncontrolRepo
       '%revision'  => $item->revision,
     );
 
+    if ($item->isDeleted()) {
+      // Do not link to deleted items.
+      return '';
+    }
+
     $view_url = $item->isFile()
       ? $this->getTemplateUrl('file_view')
       : $this->getTemplateUrl('directory_view');
