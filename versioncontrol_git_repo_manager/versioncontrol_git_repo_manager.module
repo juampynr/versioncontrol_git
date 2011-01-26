@@ -189,6 +189,34 @@ function versioncontrol_git_repo_parsing_worker_callback($data) {
   }
   // Perform a full sync. This is pretty wasteful and needs improving.
   $repository->fetchLogs();
+
+  // Invoke notification hook that new repo data has been received & parsed.
+  $all_refdata = explode("\n", $data['data']);
+  $refs = array();
+  $refs['branches'] = $refs['tags'] = array();
+  foreach ($all_refdata as $refdata) {
+    if (empty($refdata)) {
+      continue; // last element is usually empty, skip it
+    }
+    list($start, $end, $refpath) = explode(' ', $refdata);
+    list(, $type, $ref) = explode('/', $refpath);
+    $refs[$type == 'heads' ? 'branches' : 'tags'][$ref] = $ref;
+  }
+
+  if (!empty($refs['branches'])) {
+    $branches = $repository->loadBranches(array(), array('name' => array_values($refs['branches'])));
+    foreach ($branches as $branch) {
+      $refs['branches'][$branch->name] = $branch;
+    }
+  }
+  if (!empty($refs['tags'])) {
+    $tags = $repository->loadTags(array(), array('name' => array_values($refs['tags'])));
+    foreach ($tags as $tag) {
+      $refs['tags'][$tag->name] = $tag;
+    }
+  }
+
+  module_invoke_all('versioncontrol_git_refs_updated', $repository, $refs);
 }
 
 /**
