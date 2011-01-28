@@ -107,7 +107,7 @@ $handler->override_option('fields', array(
     'field' => 'date',
     'relationship' => 'none',
   ),
-  'name' => array(
+  'labels' => array(
     'label' => '',
     'alter' => array(
       'alter_text' => 0,
@@ -131,9 +131,9 @@ $handler->override_option('fields', array(
     'hide_empty' => 0,
     'empty_zero' => 0,
     'exclude' => 1,
-    'id' => 'name',
-    'table' => 'versioncontrol_labels',
-    'field' => 'name',
+    'id' => 'labels',
+    'table' => 'versioncontrol_operations',
+    'field' => 'labels',
     'relationship' => 'none',
   ),
   'revision' => array(
@@ -170,7 +170,7 @@ $handler->override_option('fields', array(
     'alter' => array(
       'text' => '<div class="commit-global">
   <h3>[date]</h3>
-  <div class="commit-info">Commit <strong>[revision]</strong> on <strong>[name]</strong></div>
+  <div class="commit-info">Commit <strong>[revision]</strong> on <strong>[labels]</strong></div>
   <div class="attribtution">[attribution]</div>
 </div>',
       'make_link' => 0,
