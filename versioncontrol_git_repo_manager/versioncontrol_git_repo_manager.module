@@ -183,7 +183,9 @@ function versioncontrol_git_repo_parsing_worker_callback($data) {
     throw new Exception('No repository id passed in for parsing job.');
   }
 
-  $repository = versioncontrol_repository_load($data['repo_id']);
+  // Highly unsafe to cache the repo in memory, since it will miss updates
+  // resulting from, say, project promotions.
+  $repository = versioncontrol_repository_load($data['repo_id'], array(), array('may cache' => FALSE));
   if (!$repository instanceof VersioncontrolGitRepository) {
     throw new Exception("No repository could be found with id {$data['repo_id']}.");
   }
