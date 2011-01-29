@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 $view = new view;
 $view->name = 'vc_git_project_commit_view';
@@ -397,6 +396,8 @@ $handler->override_option('access', array(
 $handler->override_option('cache', array(
   'type' => 'none',
 ));
+$handler->override_option('empty', 'No commits yet.');
+$handler->override_option('empty_format', '1');
 $handler->override_option('use_pager', '1');
 $handler->override_option('style_plugin', 'list');
 $handler->override_option('style_options', array(
