@@ -41,6 +41,11 @@ function versioncontrol_git_help($section, $arg) {
  * Implementation of hook_versioncontrol_backends().
  */
 function versioncontrol_git_versioncontrol_backends() {
+  if (!class_exists('VersioncontrolGitBackend')) {
+    // We're in some weird environment where autoload hasn't done its thing yet.
+    require_once drupal_get_path('module', 'versioncontrol') . '/includes/VersioncontrolBackend.php';
+    require_once drupal_get_path('module', 'versioncontrol_git') . '/includes/VersioncontrolGitBackend.php';
+  }
   return array(
     'git' => new VersioncontrolGitBackend()
   );
