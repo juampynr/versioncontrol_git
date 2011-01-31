@@ -59,7 +59,7 @@ function versioncontrol_git_cron() {
     set_time_limit(3600);
   }
   foreach ($git_repositories as $repository) {
-    if ($repository->update_method != VERSIONCONTROL_GIT_UPDATE_CRON) {
+    if ($repository->update_method != VERSIONCONTROL_UPDATE_LOG_PARSE_ON_CRON) {
       // get repositories that have log fetching enabled
       continue;
     }
