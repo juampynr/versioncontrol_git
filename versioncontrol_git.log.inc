@@ -92,13 +92,6 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
     _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $branches_in_db_by_name);
   }
 
-  // Add a new branch to all commits contained in that branch.
-  foreach ($branches_new as $branch_new) {
-    $commit_ids = _versioncontrol_git_log_get_commits_in_branch($branch_new);
-    $commits = $repository->loadCommits(array(), array('revision' => $commit_ids), array('may cache' => FALSE));
-    _versioncontrol_git_log_attach_branch_to_commits($branches_in_db_by_name[$branch_new->name], $commits);
-  }
-
   // 3. Process tags
 
   // Insert new tags in the database.
@@ -114,6 +107,23 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
   $tags_new = array_diff_key($tags_in_repo, $tags_in_db_by_name);
   if (!empty($tags_new)) {
     _versioncontrol_git_log_process_tags($repository, $tags_new);
+  }
+
+  // 4. Process both tags abd branches for relations with commits
+
+  $labels_new = array();
+  foreach ($branches_new as $label) {
+    $labels_new[] = $label;
+  }
+  foreach ($tags_new as $label) {
+    $labels_new[] = $label;
+  }
+  foreach ($labels_new as $label_new) {
+    $commit_ids = _versioncontrol_git_log_get_commits_in_label($label_new);
+    $commits = $repository->loadCommits(array(), array('revision' => $commit_ids), array('may cache' => FALSE));
+    foreach ($commits as $commit) {
+      $commit->labels[$label_new->name] = $label_new;
+    }
   }
 
   // Update repository updated field. Displayed on administration interface for documentation purposes.
@@ -184,8 +194,8 @@ function _versioncontrol_git_log_get_commits_in_repo($repository) {
  * @param VersioncontrolBranch $branch
  * @return array An array of strings with all commit id's in it
  */
-function _versioncontrol_git_log_get_commits_in_branch($branch) {
-  $logs = _versioncontrol_git_log_exec("rev-list " . escapeshellarg($branch->name) . " --");
+function _versioncontrol_git_log_get_commits_in_label($label) {
+  $logs = _versioncontrol_git_log_exec("rev-list " . escapeshellarg($label->name) . " --");
   $commits = array();
   while (($line = next($logs)) !== FALSE) {
     $commits[] = trim($line);
@@ -394,32 +404,6 @@ function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepositor
   $op->itemRevisions = $op_items;
   $op->save(array('nested' => TRUE));
 }
-
-/// All branch related functions
-
-/**
- * Attaches the label $branch to every commit if it is not there yet.
- * @param VersioncontrolBranch $branch
- * @param array $commits
- * @return none
- */
-function _versioncontrol_git_log_attach_branch_to_commits($branch, $commits) {
-  foreach ($commits as $op) {
-    // We need this complicated logic to avoid adding a branch twice to a commit.
-    $already_there = FALSE;
-    foreach($op->labels as $label) {
-      if (is_subclass_of($label, 'VersioncontrolBranch') && $label->name == $branch->name) {
-        $already_there = TRUE;
-        break;
-      }
-    }
-    if (!$already_there) {
-      $op->labels[] = $branch;
-      $op->updateLabels($op->labels);
-    }
-  }
-}
-
 
 /// Tag related functions
 
