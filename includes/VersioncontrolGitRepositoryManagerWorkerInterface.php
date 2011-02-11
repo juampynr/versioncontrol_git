@@ -3,13 +3,23 @@
 interface VersioncontrolGitRepositoryManagerWorkerInterface extends VersioncontrolRepositoryManagerWorkerInterface {
 
   /**
-   * (Re-)Init a repository a repository on disk.]
+   * Init a repository a repository on disk.
    *
-   * If called on an existing repository, this does not overwrite data - it
-   * merely ensures the latest version of the template directory is used by the
-   * repository.
+   * If called on an existing repository, this will add any additional files
+   * from the template directory that aren't already present. It will not
+   * overwrite any existing files. If you must ensure the latest version of
+   * some file, it is better to use
+   * VersioncontrolGitRepositoryManagerWorkerInterface::reInit().
    */
   public function init();
+
+  /**
+   * Re-init a repository using the appropriate template directory.
+   *
+   * This method calls rm -rf $GIT_DIR/{each,file,in,param}, then calls init().
+   * Make sure that provided file paths are relative to the $GIT_DIR.
+   */
+  public function reInit(array $flush);
 
   /**
    * Set the contents of the git repo description file ($GIT_DIR/description).
@@ -21,5 +31,32 @@ interface VersioncontrolGitRepositoryManagerWorkerInterface extends Versioncontr
    * update the repository record in the database.
    */
   public function move($target);
+
+  /**
+   * Allows an arbitrary command to be run against the repository.
+   *
+   * Use of this command should be a last resort; whenever possible use the
+   * more goal-specific methods that are provided.
+   *
+   * Note that the local setting for the git binary path is prepended to the
+   * command string, so your command should only include the git subcommand
+   * and additional arguments. For example, if you wanted to run the following:
+   *
+   *  `git config receive.denyNonFastForwards true`
+   *
+   * you should pass the following string as an array element:
+   *
+   *  `config receive.denyNonFastForwards true`
+   *
+   * @param string $command
+   *   The string command to be run against the repository. The command will be
+   *   executed using exec() after calling escapeshellcmd() on the entire
+   *   command string.
+   * @param bool $exception
+   *   Whether or not to throw an (E_ERROR) exception on a non-0 exit status.
+   * @return int
+   *   The exit code of the command.
+   */
+  public function passthru(string $command, $exception = FALSE);
 }
 
