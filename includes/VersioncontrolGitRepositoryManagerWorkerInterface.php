@@ -57,6 +57,6 @@ interface VersioncontrolGitRepositoryManagerWorkerInterface extends Versioncontr
    * @return int
    *   The exit code of the command.
    */
-  public function passthru(string $command, $exception = FALSE);
+  public function passthru($command, $exception = FALSE);
 }
 
