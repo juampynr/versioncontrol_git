@@ -35,10 +35,6 @@ function versioncontrol_git_repo_manager_cron_queue_info() {
     'worker callback' => 'versioncontrol_git_repo_parsing_worker_callback',
     'time' => 0,
   );
-  $queues['versioncontrol_git_repo_activity_stream'] = array(
-    'worker callback' => 'versioncontrol_git_repo_activity_stream_worker_callback',
-    'time' => 0,
-  );
 
   return $queues;
 }
