@@ -109,23 +109,6 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
     _versioncontrol_git_log_process_tags($repository, $tags_new);
   }
 
-  // 4. Process both tags abd branches for relations with commits
-
-  $labels_new = array();
-  foreach ($branches_new as $label) {
-    $labels_new[] = $label;
-  }
-  foreach ($tags_new as $label) {
-    $labels_new[] = $label;
-  }
-  foreach ($labels_new as $label_new) {
-    $commit_ids = _versioncontrol_git_log_get_commits_in_label($label_new);
-    $commits = $repository->loadCommits(array(), array('revision' => $commit_ids), array('may cache' => FALSE));
-    foreach ($commits as $commit) {
-      $commit->labels[$label_new->name] = $label_new;
-    }
-  }
-
   // Update repository updated field. Displayed on administration interface for documentation purposes.
   $repository->updated = time();
   $repository->locked = 0;
