@@ -29,11 +29,11 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   $root = escapeshellcmd($repository->root);
   putenv("GIT_DIR=$root");
-  if ($repository->locked == TRUE) {
+  if ($repository->locked != 0) {
     drupal_set_message(t('This repository is locked, there is already a fetch in progress. If this is not the case, press the clear lock button.'), 'error');
     return FALSE;
   }
-  $repository->locked = 1;
+  $repository->updateLock();
   $repository->update();
 
   // 1. Process branches
@@ -111,7 +111,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   // Update repository updated field. Displayed on administration interface for documentation purposes.
   $repository->updated = time();
-  $repository->locked = 0;
+  $repository->updateLock(0);
   $repository->update();
   return TRUE;
 }
