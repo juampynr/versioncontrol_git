@@ -10,6 +10,11 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
     $this->repository = $repository;
   }
 
+  public function create() {
+    $this->init();
+    $this->save();
+  }
+
   public function init() {
     exec('mkdir -p ' . escapeshellarg($this->repository->root), $output, $return);
     if ($return) {
@@ -60,6 +65,17 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
 
     $this->repository->delete();
     return TRUE;
+  }
+
+  public function move($target) {
+    exec('mv ' . escapeshellarg($this->repository->root) . ' ' . escapeshellarg($target), $output, $return);
+
+    if ($return) {
+      // move failed for some reason, throw exception
+      throw new Exception('Relocating Git repository on disk failed with code ' . $return . ' and error message \'' . implode(' ', $output) . '\'', E_ERROR);
+    }
+
+    $this->repository->root = $target;
   }
 
   public function save() {
