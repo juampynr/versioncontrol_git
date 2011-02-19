@@ -22,6 +22,20 @@ interface VersioncontrolGitRepositoryManagerWorkerInterface extends Versioncontr
   public function reInit(array $flush);
 
   /**
+   * Set a config option on the repository using `git config`.
+   *
+   * @param string $name
+   *   The name of the config option to set, e.g., receive.denyNonFastForward.
+   *   This option is passed through escapeshellarg().
+   * @param string $value
+   *   The value to set. This option is passed through escapeshellarg().
+   * @param string $type
+   *   The config value type hint to pass to git. Valid values are 'int', 'bool'
+   *   or 'path'. Optional; see man 1 git-config for details.
+   */
+  public function configSet($name, $value, $type = NULL);
+
+  /**
    * Set the contents of the git repo description file ($GIT_DIR/description).
    */
   public function setDescription($description);
