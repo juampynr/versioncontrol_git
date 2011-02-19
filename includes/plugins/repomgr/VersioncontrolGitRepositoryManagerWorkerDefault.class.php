@@ -24,7 +24,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
 
     // Create the repository on disk. Init with a template dir if one exists
     if (!empty($this->templateDir) && file_exists($this->templateDir)) {
-      $return = $this->passthru('init --template ' . $template_dir, TRUE);
+      $return = $this->passthru('init --template ' . $this->templateDir, TRUE);
     }
     else {
       $return = $this->passthru('init', TRUE);
