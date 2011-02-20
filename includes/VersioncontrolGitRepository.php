@@ -69,7 +69,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
 
       if (!empty($ir_ids)) {
         db_delete('versioncontrol_git_item_revisions')
-          ->condition('item_revision_id', $op_ids)
+          ->condition('item_revision_id', $ir_ids)
           ->execute();
       }
 
