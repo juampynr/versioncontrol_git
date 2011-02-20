@@ -27,6 +27,68 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
     }
   }
 
+  public function purgeData($bypass = TRUE) {
+    if (empty($bypass)) {
+      foreach ($this->loadBranches() as $branch) {
+        $branch->delete();
+      }
+      foreach ($this->loadTags() as $tag) {
+        $tag->delete();
+      }
+      foreach ($this->loadCommits() as $commit) {
+        $commit->delete();
+      }
+    }
+    else {
+      $label_ids = db_select('versioncontrol_labels', 'vl')
+        ->fields('vl', array('label_id'))
+        ->condition('vl.repo_id', $this->repo_id)
+        ->execute()->fetchAll(PDO::FETCH_COLUMN);
+
+      if (!empty($label_ids)) {
+        db_delete('versioncontrol_operation_labels')
+          ->condition('label_id', $label_ids)
+          ->execute();
+      }
+
+      $op_ids = db_select('versioncontrol_operations', 'vco')
+        ->fields('vco', array('vc_op_id'))
+        ->condition('vco.repo_id', $this->repo_id)
+        ->execute()->fetchAll(PDO::FETCH_COLUMN);
+
+      if (!empty($op_ids)) {
+        db_delete('versioncontrol_git_operations')
+          ->condition('vc_op_id', $op_ids)
+          ->execute();
+      }
+
+      $ir_ids = db_select('versioncontrol_item_revisions', 'vir')
+        ->fields('vir', array('item_revision_id'))
+        ->condition('vir.repo_id', $this->repo_id)
+        ->execute()->fetchAll(PDO::FETCH_COLUMN);
+
+      if (!empty($ir_ids)) {
+        db_delete('versioncontrol_git_item_revisions')
+          ->condition('item_revision_id', $op_ids)
+          ->execute();
+      }
+
+      db_delete('versioncontrol_operations')
+        ->condition('repo_id', $this->repo_id)
+        ->execute();
+
+      db_delete('versioncontrol_labels')
+        ->condition('repo_id', $this->repo_id)
+        ->execute();
+
+      db_delete('versioncontrol_item_revisions')
+        ->condition('repo_id', $this->repo_id)
+        ->execute();
+
+      module_invoke_all('versioncontrol_repository_bypass_purge', $this);
+    }
+  }
+
   public function fetchLogs() {
     // Set a hefty timeout, in case it ends up being a long fetch
     if (!ini_get('safe_mode')) {
