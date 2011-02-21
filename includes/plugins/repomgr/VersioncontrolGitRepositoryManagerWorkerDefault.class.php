@@ -81,8 +81,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
   }
 
   public function passthru($command, $exception = FALSE) {
-    // $command = escapeshellcmd($prepend . $command);
-    $command = _versioncontrol_git_get_binary_path() . ' ' . $command;
+    $command = escapeshellcmd(_versioncontrol_git_get_binary_path() . ' ' . $command);
 
     $env = array(
       'GIT_DIR' => $this->repository->root,
