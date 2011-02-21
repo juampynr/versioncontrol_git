@@ -36,6 +36,197 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
   $repository->updateLock();
   $repository->update();
 
+$autoinc_base = variable_get('versioncontrol_git_autoincrement_base', 0);
+$autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
+
+  // Is this a fresh import?
+  $commits_in_db = $repository->loadCommits(array(), array(), array('may cache' => FALSE));
+  if (empty($commits_in_db)) {
+    $repo_id = $repository->repo_id;
+
+    $file_names = _version_control_fast_export();
+
+    $marks = _versioncontrol_git_log_process_marks($file_names[2]);
+    $logs = _versioncontrol_git_log_process_logfile($file_names[1], $marks);
+    $numlines = _versioncontrol_git_log_process_numstat($file_names[0]);
+
+    $values = array();
+    $start = db_result(db_query('SELECT MAX(vc_op_id) FROM {versioncontrol_operations}'));
+    $query = db_insert('versioncontrol_operations')->fields(array('type', 'repo_id', 'date', 'author', 'author_uid', 'committer', 'committer_uid', 'revision', 'message'));
+    if (!is_numeric($start) || $start == 0) {
+      $start = $autoinc_base;
+    }
+    foreach ($logs as $log) {
+      $start += $autoinc_step;
+      $values = array(
+        'type' => 1,
+        'repo_id' => $repo_id,
+        'date' => $log->date,
+        'author' => $log->author,
+        'author_uid' => 0,
+        'committer' => $log->committer,
+        'committer_uid' => 0,
+        'revision' => $log->revision,
+        'message' => $log->msg,
+      );
+      $log->vc_op_id = $start;
+      $query->values($values);
+    }
+    if ($values) {
+      $query->execute();
+    }
+    $end = db_result(db_query('SELECT MAX(vc_op_id) FROM {versioncontrol_operations} WHERE repo_id = '. $repo_id));
+    if ($start != $end) {
+      drupal_set_message("Concurrency error during inital import of {versioncontrol_operations} for repo id #$repo_id. Expected $start, got $end.");
+    }
+
+    $values = array();
+    $start = db_result(db_query('SELECT MAX(item_revision_id) FROM {versioncontrol_item_revisions}')); //Make this happen in the same transaction.
+    if (!is_numeric($start) || $start == 0) {
+      $start = $autoinc_base;
+    }
+    $query = db_insert('versioncontrol_item_revisions')->fields(array('vc_op_id', 'repo_id', 'path', 'revision', 'type', 'source_item_revision_id', 'action', 'line_changes_added', 'line_changes_removed'));
+    $source_id = 0;
+    foreach ($logs as $log) {
+      foreach($log->files as $hash => $file) {
+        $start += $autoinc_step;
+        $log->files[$hash]['rev_id'] = $start;
+        $log->name_block->updateAncestor($log->revision, $file['name'], $start);
+        $type = $file['type'] == VERSIONCONTROL_ACTION_DELETED ? VERSIONCONTROL_ITEM_FILE_DELETED : VERSIONCONTROL_ITEM_FILE;
+        //define('VERSIONCONTROL_ITEM_DIRECTORY',         2); Git doesn't track directories so these are never used.
+        //define('VERSIONCONTROL_ITEM_DIRECTORY_DELETED', 4);
+        if (isset($numlines[$log->revision][$file['name']][0])) {
+          $lines_added = $numlines[$log->revision][$file['name']][0];
+          $lines_removed = $numlines[$log->revision][$file['name']][1];
+        }
+        else {
+          $lines_added = 0;
+          $lines_removed = 0;
+        }
+        $values = array(
+          'vc_op_id' => $log->vc_op_id,
+          'repo_id' => $repo_id,
+          'path' => $file['name'],
+          'revision' => $log->revision,
+          'type' => $type,
+          'source_item_revision_id' => $log->name_block->getAncestor( $file['name'], $log->revision),
+          'action' => $file['type'],
+          'line_changes_added' => $lines_added,
+          'line_changes_removed' => $lines_removed,
+        );
+        $query->values($values);
+      }
+    }
+    if ($values) {
+      $query->execute();
+    }
+    $end = db_result(db_query('SELECT MAX(item_revision_id) FROM {versioncontrol_item_revisions} WHERE repo_id = '. $repo_id));
+    if ($start != $end) {
+      drupal_set_message("Concurrency error during inital import of {versioncontrol_item_revisions} for repo id #$repo_id. Expected $start, got $end.");
+    }
+
+    $query = db_insert('versioncontrol_git_item_revisions')->fields(array('item_revision_id', 'blob_hash'));
+    $values = array();
+    foreach ($logs as $log) {
+      foreach(array_keys($log->files) as $hash) {
+        $values = array(
+          'item_revision_id' => $log->files[$hash]['rev_id'],
+          'blob_hash' => $hash,
+        );
+        $query->values($values);
+      }
+    }
+    if ($values) {
+      $query->execute();
+    }
+
+
+    $query = db_insert('versioncontrol_git_operations')->fields(array('vc_op_id', 'author_name', 'committer_name', 'parent_commit', 'merge'));
+    $values = array();
+    foreach ($logs as $log) {
+      $merge = empty($log->merge) ? 0 : 1; // We don't reference the additional merge parents by commit.
+      $values = array(
+        'vc_op_id' => $log->vc_op_id,
+        'author_name' => $log->author,
+        'committer_name' => $log->committer,
+        'parent_commit' => $log->from,
+        'merge' => $merge,
+      );
+      $query->values($values);
+    }
+    if ($values) {
+      $query->execute();
+    }
+
+
+    //db_query('LOCK TABLES {versioncontrol_labels} WRITE');
+    $values = '';
+    $start = db_result(db_query('SELECT MAX(label_id) FROM {versioncontrol_labels}'));
+    if (!is_numeric($start) || $start == 0) {
+      $start = $autoinc_base;
+    }
+    $query = db_insert('versioncontrol_labels')->fields(array('repo_id', 'name', 'type', 'data'));
+    $log = $logs[0];
+    $names = $log->name_block;
+    foreach (array_keys($names->names) as $name) {
+      $start += $autoinc_step;
+      $names->names[$name]['label_id'] = $start; //Save the new label_id in the shared nameBlock for later.
+      $values = array(
+        'repo_id' => $repo_id,
+        'name' => $name,
+        'type' => $log->type,
+        'data' => '',
+      );
+      $query->values($values);
+    }
+    if ($values) {
+      $query->execute();
+    }
+    $end = db_result(db_query('SELECT MAX(label_id) FROM {versioncontrol_labels} WHERE repo_id = '. $repo_id));
+    if ($start != $end) {
+      watchdog('vc_git', "Concurrency error during inital import of {versioncontrol_labels} for repo id #$repo_id. Expected $start, got $end.");
+    }
+
+    $log = $logs[0];
+    $names = $log->name_block;
+    foreach (array_keys($names->names) as $name) {
+      if ($names->names[$name]['type'] == VERSIONCONTROL_LABEL_BRANCH) {
+        $label_obj = (object) array('name' => $name);
+        $revs = _versioncontrol_git_log_get_commits_in_label($label_obj);
+        foreach ($revs as $rev) {
+          $label_map[$rev][] = $name;
+        }
+      }
+    }
+
+    $query = db_insert('versioncontrol_operation_labels')->fields(array('vc_op_id', 'label_id', 'action'));
+    $values = '';
+    foreach ($logs as $log) {
+      if (empty($label_map[$log->revision])) {
+        continue;
+      }
+      // If the same commit appears in 10 branches we should have 10 rows.
+      foreach ($label_map[$log->revision] as $name) {
+        $values = array(
+          'vc_op_id' => $log->vc_op_id,
+          'label_id' => $log->name_block->names[$name]['label_id'],
+          'action' => 2, // It's always two on the live db. Column will be removed.
+        );
+        $query->values($values);
+      }
+    }
+    unset($label_map);
+    if ($values) {
+      $query->execute();
+    }
+
+    $repository->updated = time();
+    $repository->updateLock(0);
+    $repository->update();
+
+    return TRUE;
+  }
+
   // 1. Process branches
 
   // Fetch branches from the repo and load them from the db.
@@ -46,11 +237,9 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
     $branches_in_db_by_name[$branch->name] = $branch;
   }
   unset($branches_in_db);
-
   // Determine whether we've got branch changes to make.
   $branches_new = array_diff_key($branches_in_repo, $branches_in_db_by_name);
   $branches_deleted = array_diff_key($branches_in_db_by_name, $branches_in_repo);
-
   // Insert new branches in the repository. Later all commits in these new
   // branches will be updated.
   // Unfortunately we can't say anything about the branch author at this time.
@@ -67,14 +256,11 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
   foreach ($branches_in_db as $branch) {
     $branches_in_db_by_name[$branch->name] = $branch;
   }
-
   // Deleted branches are removed, commits in them are not!
   foreach($branches_deleted as $branch) {
     $branch->delete();
   }
-
   // 2. Process commits
-
   // Fetch commits from the repo and load them from the db.
   $commits_in_repo_hashes = $repository->fetchCommits();
   $commits_in_db = $repository->loadCommits(array(), array(), array('may cache' => FALSE));
@@ -84,16 +270,13 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
   }
   unset($commits_in_db);
   $commits_new = array_diff($commits_in_repo_hashes, $commits_in_db_hashes);
-
   // Insert new commits in the database.
   foreach ($commits_new as $hash) {
     $command = "show --numstat --summary --pretty=format:\"%H%n%P%n%an%n%ae%n%cn%n%ce%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
     $output = _versioncontrol_git_log_exec($command);
     _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $branches_in_db_by_name);
   }
-
   // 3. Process tags
-
   // Insert new tags in the database.
   $tags_in_repo = $repository->fetchTags();
   $tags_in_db = $repository->loadTags();
@@ -115,9 +298,23 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
   $repository->update();
   return TRUE;
 }
-
 /// All general functions
+function _version_control_fast_export() {
+  $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
+  if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
+    watchdog('vc_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+    return array();
+  }
+  $tmp_mark = tempnam(file_directory_temp(), 'vclpm');
+  $tmp_log = tempnam(file_directory_temp(), 'vclpl');
+  $cmd = "fast-export --no-data --tag-of-filtered-object=drop --signed-tags=verbatim --export-marks=$tmp_mark --all";
+  exec(escapeshellcmd("$git_bin $cmd") ." > $tmp_log", $logs);
+  $tmp_stat = tempnam(file_directory_temp(), 'vclps');
+  $cmd = "log --numstat --pretty=format:%H";
+  exec(escapeshellcmd("$git_bin $cmd") ." > $tmp_stat", $logs);
 
+  return array($tmp_stat, $tmp_log, $tmp_mark);
+}
 /**
  * Execute a Git command using the root context and the command to be executed.
  * @param string $command Command to execute.
@@ -127,7 +324,7 @@ function _versioncontrol_git_log_exec($command) {
   $logs = array();
   $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
   if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
-    watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+    watchdog('vc_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
     return array();
   }
   exec(escapeshellcmd("$git_bin $command"), $logs);
@@ -135,7 +332,6 @@ function _versioncontrol_git_log_exec($command) {
   reset($logs); // Reset the array pointer, so that we can use next().
   return $logs;
 }
-
 /// All commit related function
 
 /**
@@ -519,7 +715,7 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
       }
     }
     else {
-      watchdog('versioncontrol_git', 'Serious problem in tag parsing, please check that you\'re using a supported version of git!');
+      watchdog('vc_git', 'Serious problem in tag parsing, please check that you\'re using a supported version of git!');
     }
 
     $tag_data = array(
@@ -530,5 +726,215 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
 
     $tag = $repository->getBackend()->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
     $tag->insert();
+  }
+}
+
+function _versioncontrol_git_log_process_marks($mark_file) {
+  $lines = file($mark_file);
+  $marks = array();
+  foreach ($lines as $line) {
+    $e = explode(' ', $line);
+    $marks[intval(ltrim($e[0], ':'))] = trim($e[1]);
+  }
+  unlink($mark_file);
+  return $marks;
+}
+
+
+function _versioncontrol_git_log_process_numstat($stats_file) {
+  $lines = file($stats_file);
+  $stats = array();
+  $hash = GIT_NULL_REV;
+  $mark = array();
+  foreach ($lines as $line) {
+    if (empty($line)) {
+      continue;
+    }
+    if (preg_match('/^([a-f,0-9]{40})$/', $line, $mark)) {
+      $hash = $mark[1];
+      continue;
+    }
+    if (preg_match('/^(\d+)\t(\d+)\t(.+)$/', $line, $mark)) {
+      $name = '/'. $mark[3];
+      $stats[$hash][$name] = array($mark[1], $mark[2]);
+    }
+  }
+  unlink($stats_file);
+  return $stats;
+}
+
+function _versioncontrol_git_log_process_logfile($log_file, &$marks) {
+  $fp = fopen($log_file, 'rb');
+  $name_block = new nameBlock();
+  $log = array();
+  $data_length = 0;
+  while (($line = fgets($fp)) !== FALSE) {
+    $mark = array();
+    if (empty($line)) {
+      continue;
+    }
+    do {
+      $repeat = FALSE;
+      // Add in tagger.
+      if ($data_length) {
+        if ($data_length >= strlen($line)) {
+          $data_length -= $working->addMsg($line);
+        }
+        else {
+          $data_length = 0;
+          $len = $working->addMsg($line);
+          $line = substr($line, $len);
+          $repeat = TRUE;
+        }
+      }
+      elseif (preg_match('/^commit\b/', $line)) {
+        if (isset($working)) {
+          $working->updateCommit();
+          $log[] = $working;
+        }
+        $working = new logBlock();
+        $working->name_block = $name_block;
+        $working->setCommit($line);
+      }
+      elseif (preg_match('/(.) (\d+) ([a-f,0-9]{40}) (.+)$/', $line, $mark)) {
+        $working->addFile($mark[1], $mark[2], $mark[3], $mark[4]);
+      }
+      elseif (preg_match('/^data (\d+)$/', $line, $mark)) {
+        $data_length = $mark[1];
+      }
+      elseif (preg_match('/^mark :(\d+)$/', $line, $mark)) {
+        $working->revision = $marks[$mark[1]];
+      }
+      elseif (preg_match('/^from :(\d+)$/', $line, $mark)) {
+        $working->from = $marks[$mark[1]];
+      }
+      elseif (preg_match('/^author[^<]*<([^>]+)> (\d+)/', $line, $mark)) {
+        $working->author = $mark[1];
+        $working->date = $mark[2];
+      }
+      elseif (preg_match('/^committer[^<]*<([^>]+)> (\d+)/', $line, $mark)) {
+        $working->committer = $mark[1];
+      }
+      elseif (preg_match('/^merge :(\d+)$/', $line, $mark)) {
+        $working->merge[] = $marks[$mark[1]];
+      }
+    } while ($repeat);
+  }
+  $working->updateCommit();
+  $log[] = $working;
+  fclose($fp);
+  unlink($log_file);
+  return $log;
+}
+
+class logBlock {
+  public $files = array();
+  public $commit = ''; //This actually holds branch/tag names.
+  public $type = 0;
+  public $revision = '';
+  public $date = 0;
+  public $author = '';
+  public $committer = '';
+  public $msg = '';
+  public $from = GIT_NULL_REV;
+  public $vc_op_id;
+  public $name_block;
+  public $merge = array();
+
+  function addMsg($line) {
+    $this->msg .= $line;
+    return strlen($line);
+  }
+
+  function setCommit($commit) {
+    $parts = explode(' ', $commit);
+    $ref = trim($parts[1]);
+    $path = explode('/', $ref);
+    $this->commit = array_pop($path);
+    // We've popped the name off so if any remaining piece says tag we have a tag.
+    if (in_array('tags', $path)) {
+      $this->type = VERSIONCONTROL_LABEL_TAG;
+      // Annotated tags are style of tag: and have a tagger.
+    }
+    else {
+      $this->type = VERSIONCONTROL_LABEL_BRANCH;
+    }
+  }
+
+  function updateCommit() {
+    $this->name_block->add($this->commit, $this->type);
+  }
+
+  function addfile($type, $mode, $hash, $name) {
+    $name = '/'. $name; // Remove this later.
+    switch ($type) {
+      case 'M':
+        $type = VERSIONCONTROL_ACTION_MODIFIED;
+        break;
+      case 'A':
+        $type = VERSIONCONTROL_ACTION_ADDED;
+        break;
+      case 'D':
+        $type = VERSIONCONTROL_ACTION_DELETED;
+        break;
+      case 'R':
+        $type = VERSIONCONTROL_ACTION_MOVED;
+        break;
+      case 'C':
+        $type = VERSIONCONTROL_ACTION_COPIED;
+        break;
+      case '?':
+        $type = VERSIONCONTROL_ACTION_MERGED;
+        break;
+      case '?':
+        $type = VERSIONCONTROL_ACTION_REPLACED;
+        break;
+      default:
+        $type = VERSIONCONTROL_ACTION_OTHER;
+    }
+    $this->files[$hash] = array('name' => $name, 'type' => $type, 'mode' => $mode);
+    $this->name_block->addAncestor($name, $this->revision);
+  }
+}
+
+class nameBlock {
+  public $names = array();
+  public $ancestor = array();
+  public $history = array();
+
+  function add($name, $type) {
+    if (!array_key_exists($name, $this->names)) {
+      $this->names[$name]['type'] = $type; // Will be updated with a label_id
+      $this->names[$name]['label_id'] = 0; // Will be updated with a label_id
+    }
+  }
+
+  function addAncestor($name, $hash) {
+    if (array_key_exists($name, $this->ancestor)) {
+      if (array_key_exists($hash, $this->ancestor[$name])) {
+        return;
+      }
+      $keys = array_keys($this->ancestor[$name]);
+      $last = end($keys);
+    }
+    else {
+      $this->ancestor[$name][$hash] = 0;
+      return;
+    }
+    $this->ancestor[$name][$hash] = $last;
+  }
+
+  function updateAncestor($hash, $name, $id) {
+    $this->history[$name][$hash] = $id;
+  }
+
+  function getAncestor($name, $rev) {
+    if (array_key_exists($name, $this->history)) {
+      $last_rev = $this->ancestor[$name][$rev];
+      if ($last_rev && array_key_exists($last_rev, $this->history[$name])) {
+        return $this->history[$name][$last_rev];
+      }
+    }
+    return 0;
   }
 }
