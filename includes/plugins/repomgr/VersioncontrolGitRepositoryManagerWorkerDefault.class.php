@@ -39,7 +39,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
     if (!empty($flush)) {
       $flush = count($flush) > 1 ? '{' . implode(',', $flush) . '}' : array_shift($flush);
       $command = "rm -rf " . escapeshellarg($this->repository->root) . "/$flush";
-
+      $this->proc_open($command, TRUE);
     }
     $this->init();
   }
