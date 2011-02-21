@@ -48,6 +48,12 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
 
     $marks = _versioncontrol_git_log_process_marks($file_names[2]);
     $logs = _versioncontrol_git_log_process_logfile($file_names[1], $marks);
+    if ($logs == FALSE) {
+      $repository->updated = time();
+      $repository->updateLock(0);
+      $repository->update();
+      return TRUE;
+    }
     $numlines = _versioncontrol_git_log_process_numstat($file_names[0]);
 
     $values = array();
@@ -855,6 +861,10 @@ function _versioncontrol_git_log_process_logfile($log_file, &$marks) {
         $working->merge[] = $marks[$mark[1]];
       }
     } while ($repeat);
+  }
+  if (empty($working)) {
+    watchdog('vc_git', "Can't process empty repository.");
+    return FALSE;
   }
   $working->updateCommit();
   $log[] = $working;
