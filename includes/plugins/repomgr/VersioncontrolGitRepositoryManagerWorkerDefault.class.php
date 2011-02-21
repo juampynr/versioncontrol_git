@@ -17,7 +17,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
 
   public function init() {
     // if mkdir fails for some reason, it'll error out
-    $this->proc_open('mkdir -p ' . escapeshellarg($this->repository->root), TRUE, NULL, array());
+    $this->proc_open('mkdir -p ' . escapeshellarg($this->repository->root), TRUE);
 
     // Create the repository on disk. Init with a template dir if one exists
     if (!empty($this->templateDir) && file_exists($this->templateDir)) {
@@ -57,7 +57,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
   public function delete() {
     $command = 'rm -rf ' . escapeshellarg($this->repository->root);
     // This'll error out if deletion fails.
-    $this->proc_open($command, TRUE, NULL, array());
+    $this->proc_open($command, TRUE);
 
     $this->repository->delete();
     return TRUE;
@@ -65,7 +65,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
 
   public function move($target) {
     $command = 'mv ' . escapeshellarg($this->repository->root) . ' ' . escapeshellarg($target);
-    $this->proc_open($command, TRUE, NULL, array());
+    $this->proc_open($command, TRUE);
     $this->repository->root = $target;
     return TRUE;
   }
@@ -98,13 +98,13 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
    * escaping and limiting to a particular dir in the public-facing passthru()
    * method, which then calls this.
    */
-  protected function proc_open($command, $exception, $cwd, $env) {
+  protected function proc_open($command, $exception, $cwd = NULL, $env = array()) {
     $descriptor_spec = array(
       1 => array('pipe', 'w'),
       2 => array('pipe', 'w'),
     );
 
-    $process = proc_open($command, $descriptor_spec, $pipes, $cwd = NULL, $env = array());
+    $process = proc_open($command, $descriptor_spec, $pipes, $cwd, $env);
     if (is_resource($process)) {
       $stdout = stream_get_contents($pipes[1]);
       fclose($pipes[1]);
