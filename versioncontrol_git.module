@@ -95,7 +95,7 @@ function versioncontrol_git_views_api() {
 function _versioncontrol_git_get_binary_path($error = TRUE) {
   $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
   if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
-    watchdog('vc_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+    watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
     if ($error) {
       throw new Exception('No git binary could be found at the specified location, "' . $git_bin . '"', E_ERROR);
     }
