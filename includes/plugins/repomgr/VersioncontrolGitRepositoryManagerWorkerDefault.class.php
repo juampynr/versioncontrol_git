@@ -87,7 +87,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
     $env = array(
       'GIT_DIR' => $this->repository->root,
     );
-    return $this->proc_open($command, $exception, NULL, $env);
+    return $this->proc_open($command, $exception, file_exists($this->repository->root) ? $this->repository->root : NULL, $env);
   }
 
   /**
