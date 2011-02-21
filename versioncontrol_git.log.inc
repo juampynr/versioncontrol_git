@@ -56,6 +56,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
     }
     $numlines = _versioncontrol_git_log_process_numstat($file_names[0]);
 
+    db_query("BEGIN");
     $values = array();
     $start = db_result(db_query('SELECT MAX(vc_op_id) FROM {versioncontrol_operations}'));
     $query = db_insert('versioncontrol_operations')->fields(array('type', 'repo_id', 'date', 'author', 'author_uid', 'committer', 'committer_uid', 'revision', 'message'));
@@ -82,6 +83,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
       $query->execute();
     }
     $end = db_result(db_query('SELECT MAX(vc_op_id) FROM {versioncontrol_operations} WHERE repo_id = '. $repo_id));
+    db_query("COMMIT");
     if ($start != $end) {
       watchdog('vc_git', "Concurrency problem during inital import of {versioncontrol_operations} for repo id #$repo_id. Expected $start, got $end. Recovering.");
       $result = db_query("SELECT vc_op_id, revision FROM {versioncontrol_operations} WHERE repo_id = $repo_id ORDER BY vc_op_id ASC");
@@ -91,11 +93,13 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
           $log->vc_op_id = $r['vc_op_id'];
         }
         else {
-          drupal_set_message("Mismatch when correcting {versioncontrol_operations} autoincrement mapping.");
+          $replacements = array('@op1' => $log->vc_op_id, '@op2' => $r['vc_op_id'], '@rev1' => $log->revision, '@rev2' => $r['revision']);
+          watchdog("Mismatch when correcting {versioncontrol_operations} autoincrement mapping. Was @op1, changing to @op2 for real revision @rev1 and database revision @rev2.", $replacements, WATCHDOG_INFO);
         }
       }
     }
 
+    db_query("BEGIN");
     $values = array();
     $start = db_result(db_query('SELECT MAX(item_revision_id) FROM {versioncontrol_item_revisions}')); //Make this happen in the same transaction.
     if (!is_numeric($start) || $start == 0) {
@@ -137,6 +141,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
       $query->execute();
     }
     $end = db_result(db_query('SELECT MAX(item_revision_id) FROM {versioncontrol_item_revisions} WHERE repo_id = '. $repo_id));
+    db_query("COMMIT");
     if ($start != $end) {
       watchdog('vc_git', "Concurrency error during inital import of {versioncontrol_item_revisions} for repo id #$repo_id. Expected $start, got $end. Recovering.");
       $logs[0]->name_block->history = array();
@@ -149,7 +154,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
             $log->name_block->updateAncestor($log->revision, $file['name'], $r['item_revision_id']);
           }
           else {
-            drupal_set_message("Mismatch when correcting {versioncontrol_item_revisions} autoincrement mapping.");
+            watchdog("Mismatch when correcting {versioncontrol_item_revisions} autoincrement mapping.", array(), WATCHDOG_INFO);
           }
         }
       }
@@ -188,7 +193,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
       $query->execute();
     }
 
-
+    db_query("BEGIN");
     //db_query('LOCK TABLES {versioncontrol_labels} WRITE');
     $values = '';
     $start = db_result(db_query('SELECT MAX(label_id) FROM {versioncontrol_labels}'));
@@ -213,6 +218,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
       $query->execute();
     }
     $end = db_result(db_query('SELECT MAX(label_id) FROM {versioncontrol_labels} WHERE repo_id = '. $repo_id));
+    db_query("COMMIT");
     if ($start != $end) {
       watchdog('vc_git', "Concurrency error during inital import of {versioncontrol_labels} for repo id #$repo_id. Expected $start, got $end. Recovering.");
       $result = db_query("SELECT label_id, name FROM {versioncontrol_labels} WHERE repo_id = $repo_id ORDER BY label_id ASC");
@@ -224,7 +230,7 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
           $names->names[$name]['label_id'] = $r['label_id'];
         }
         else {
-          drupal_set_message("Mismatch when correcting {versioncontrol_labels} autoincrement mapping.");
+          watchdog("Mismatch when correcting {versioncontrol_labels} autoincrement mapping.", array(), WATCHDOG_INFO);
         }
       }
     }
@@ -863,7 +869,7 @@ function _versioncontrol_git_log_process_logfile($log_file, &$marks) {
     } while ($repeat);
   }
   if (empty($working)) {
-    watchdog('vc_git', "Can't process empty repository.");
+    watchdog('vc_git', "Can't process empty repository.", array(), WATCHDOG_INFO);
     return FALSE;
   }
   $working->updateCommit();
