@@ -77,7 +77,17 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
     }
     $end = db_result(db_query('SELECT MAX(vc_op_id) FROM {versioncontrol_operations} WHERE repo_id = '. $repo_id));
     if ($start != $end) {
-      drupal_set_message("Concurrency error during inital import of {versioncontrol_operations} for repo id #$repo_id. Expected $start, got $end.");
+      watchdog('vc_git', "Concurrency problem during inital import of {versioncontrol_operations} for repo id #$repo_id. Expected $start, got $end. Recovering.");
+      $result = db_query("SELECT vc_op_id, revision FROM {versioncontrol_operations} WHERE repo_id = $repo_id ORDER BY vc_op_id ASC");
+      foreach ($logs as $log) {
+        $r = db_fetch_array($result);
+        if ($r['revision'] == $log->revision) {
+          $log->vc_op_id = $r['vc_op_id'];
+        }
+        else {
+          drupal_set_message("Mismatch when correcting {versioncontrol_operations} autoincrement mapping.");
+        }
+      }
     }
 
     $values = array();
@@ -122,7 +132,21 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
     }
     $end = db_result(db_query('SELECT MAX(item_revision_id) FROM {versioncontrol_item_revisions} WHERE repo_id = '. $repo_id));
     if ($start != $end) {
-      drupal_set_message("Concurrency error during inital import of {versioncontrol_item_revisions} for repo id #$repo_id. Expected $start, got $end.");
+      watchdog('vc_git', "Concurrency error during inital import of {versioncontrol_item_revisions} for repo id #$repo_id. Expected $start, got $end. Recovering.");
+      $logs[0]->name_block->history = array();
+      $result = db_query("SELECT item_revision_id, path FROM {versioncontrol_item_revisions} WHERE repo_id = $repo_id ORDER BY item_revision_id ASC");
+      foreach ($logs as $log) {
+        foreach($log->files as $hash => $file) {
+          $r = db_fetch_array($result);
+          if ($r['path'] == $file['name']) {
+            $log->files[$hash]['rev_id'] = $r['item_revision_id'];
+            $log->name_block->updateAncestor($log->revision, $file['name'], $r['item_revision_id']);
+          }
+          else {
+            drupal_set_message("Mismatch when correcting {versioncontrol_item_revisions} autoincrement mapping.");
+          }
+        }
+      }
     }
 
     $query = db_insert('versioncontrol_git_item_revisions')->fields(array('item_revision_id', 'blob_hash'));
@@ -184,7 +208,19 @@ $autoinc_step = variable_get('versioncontrol_git_autoincrement_step', 1);
     }
     $end = db_result(db_query('SELECT MAX(label_id) FROM {versioncontrol_labels} WHERE repo_id = '. $repo_id));
     if ($start != $end) {
-      watchdog('vc_git', "Concurrency error during inital import of {versioncontrol_labels} for repo id #$repo_id. Expected $start, got $end.");
+      watchdog('vc_git', "Concurrency error during inital import of {versioncontrol_labels} for repo id #$repo_id. Expected $start, got $end. Recovering.");
+      $result = db_query("SELECT label_id, name FROM {versioncontrol_labels} WHERE repo_id = $repo_id ORDER BY label_id ASC");
+      $log = $logs[0];
+      $names = $log->name_block;
+      foreach (array_keys($names->names) as $name) {
+        $r = db_fetch_array($result);
+        if ($r['name'] == $name) {
+          $names->names[$name]['label_id'] = $r['label_id'];
+        }
+        else {
+          drupal_set_message("Mismatch when correcting {versioncontrol_labels} autoincrement mapping.");
+        }
+      }
     }
 
     $log = $logs[0];
