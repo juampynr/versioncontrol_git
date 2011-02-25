@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Configuration variables and bootstrapping code for all Git hook scripts.

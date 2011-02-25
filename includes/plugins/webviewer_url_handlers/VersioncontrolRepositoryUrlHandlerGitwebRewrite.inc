@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Repository Url handler class for gitweb with pathinfo feature enabled.

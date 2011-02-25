@@ -1,6 +1,5 @@
 #!/usr/bin/php
 <?php
-// $Id$
 /**
  * @file
  * Insert commit info into the Drupal database by loading Git backend and

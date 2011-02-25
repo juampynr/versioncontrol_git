@@ -1,4 +1,3 @@
-; $Id$
 name = "Git backend"
 description = "Git backend for Version Control API - Provides Git commit information and account management as a pluggable backend."
 core=6.x

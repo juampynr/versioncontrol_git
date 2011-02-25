@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 $view = new view;
 $view->name = 'vc_git_individual_commit';

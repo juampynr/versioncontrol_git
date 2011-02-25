@@ -1,4 +1,3 @@
-; $Id$
 name = "Git Repository Manager"
 description = "Provides ."
 core=6.x

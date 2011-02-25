@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * This plugin provides support for gitweb, when gitweb configuration

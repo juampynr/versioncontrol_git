@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Git backend for Version Control API - Provides Git commit information and

@@ -1,4 +1,3 @@
-$Id$
 
 Git backend for Version Control API -
 Provides Git commit information as a pluggable backend.
