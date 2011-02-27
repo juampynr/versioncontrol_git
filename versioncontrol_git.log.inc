@@ -101,11 +101,16 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
     $tags_in_db_by_name[$tag->name] = $tag;
   }
   unset($tags_in_db);
-  // Deleting tags is *not* supported. Read the manual if you want to know why...
+
   // Check for new tags.
   $tags_new = array_diff_key($tags_in_repo, $tags_in_db_by_name);
+  $tags_deleted = array_diff_key($tags_in_db_by_name, $tags_in_repo);
   if (!empty($tags_new)) {
     _versioncontrol_git_log_process_tags($repository, $tags_new);
+  }
+  // Delete removed tags
+  foreach($tags_deleted as $tag) {
+    $tag->delete();
   }
 
   // Update repository updated field. Displayed on administration interface for documentation purposes.
