@@ -21,9 +21,6 @@ class VersioncontrolGitBackend extends VersioncontrolBackend {
     'project_user_commit_view' => 'vc_git_project_user_commits',
     'project_commit_view' => 'vc_git_project_commit_view',
     'individual_commit_view' => 'vc_git_individual_commit',
-//    'global_commit_view' => 'vc_git_global_commits',
-//    'user_commit_view' => 'vc_git_user_commits',
-//    'repository_commit_view' => 'vc_git_repository_commits',
   );
 
   public function __construct() {
