@@ -1,0 +1,26 @@
+<?php
+
+require_once drupal_get_path('module', 'versioncontrol') . '/tests/VersioncontrolTestCase.test';
+
+abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
+
+  public function setUp() {
+    $args = func_get_args();
+    if (array_search('versioncontrol_git', $args) === FALSE) {
+      $args[] = 'versioncontrol_git';
+    }
+    call_user_func_array(array($this, 'parent::setUp'));
+  }
+
+  public function versioncontrolCreateRepository($backend_name = 'git', $data = array(), $insert = TRUE) {
+    parent::versioncontrolCreateRepository($backend_name, $data, $insert);
+  }
+
+  public function createRepoFromTestRepo($path) {
+
+  }
+
+  public function createRepoFromClone($remote, $path) {
+
+  }
+}
