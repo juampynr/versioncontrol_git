@@ -7,6 +7,17 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
   protected $templateDir;
 
   public function setRepository(VersioncontrolRepository $repository) {
+    // Additional parameter check to the appropriate Git subclass of that
+    // required by the interface itself.
+    if (!$repository instanceof VersioncontrolGitRepository) {
+      $msg = 'The repository "@name" with repo_id "@repo_id" passed to ' . __METHOD__ . ' was not a VersioncontrolGitRepository instance.' ;
+      $vars = array(
+        '@name' => $repository->name,
+        '@repo_id' => empty($repository->repo_id) ? '[NEW]' : $repository->repo_id,
+      );
+      watchdog($msg, $vars, WATCHDOG_ERROR);
+      throw new Exception(strtr($msg, $vars), E_ERROR);
+    }
     $this->repository = $repository;
   }
 
@@ -87,6 +98,29 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
       'GIT_DIR' => $this->repository->root,
     );
     return $this->proc_open($command, $exception, file_exists($this->repository->root) ? $this->repository->root : NULL, $env);
+  }
+
+  /**
+   * Ensure we're properly set up before we try to do anything. If setup does
+   * not pass verification, watchdog and optionally throw exceptions.
+   */
+  public function verify($exception = TRUE) {
+    if (!is_null($this->verified)) {
+      return $this->verified;
+    }
+
+    $this->verified = TRUE;
+
+    if (empty($this->repository)) {
+      $this->verified = FALSE;
+      $msg = 'No repository object was attached for the repomgr to work on.';
+      watchdog($msg, array(), WATCHDOG_ERROR);
+      if ($exception) {
+        throw new Exception($msg, E_ERROR);
+      }
+    }
+
+    return $this->verified;
   }
 
   /**
