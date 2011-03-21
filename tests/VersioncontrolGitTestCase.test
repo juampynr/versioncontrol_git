@@ -47,7 +47,16 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
   }
 
   public function createRepoFromClone($remote) {
+    $this->repocount++;
+    $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
 
+    $data = array(
+      'path' => $path,
+    );
+
+    $repo = $this->versioncontrolCreateRepository('git', $data);
+    $repo->exec("clone $remote $path");
+    return $repo;
   }
 
   public function tearDown() {
