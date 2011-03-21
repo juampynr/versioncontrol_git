@@ -23,7 +23,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     call_user_func_array(array($this, 'parent::setUp'));
   }
 
-  public function createRepoFromTestRepo($path) {
+  public function createRepoFromTestRepo() {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
     $tarball = drupal_get_path('module', 'versioncontrol_git') . '/tests/testrepo.tar.bz2';
@@ -34,14 +34,15 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
       'path' => $path,
     );
 
-    $this->versioncontrolCreateRepository('git', $data);
+    return $this->versioncontrolCreateRepository('git', $data);
   }
 
-  public function createRepoFromClone($remote, $path) {
+  public function createRepoFromClone($remote) {
 
   }
 
   public function tearDown() {
+    // Remove temporary repositories, if any
     $i = 0;
     while ($i < $this->repocount) {
       $path = file_directory_path() . '/vc_git/repositories/' . $i . '.git';
