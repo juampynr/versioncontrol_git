@@ -12,7 +12,13 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    */
   protected $repocount = 0;
 
+  protected $gitpath;
+
   public function setUp() {
+    // Get the git path before clearing all vars. If no git binary is found, the
+    // function will throw an error that safely terminates the test.
+    $this->gitpath = _versioncontrol_git_get_binary_path();
+
     // Each test cleans up its repos, so ensure we start over at 0. This might
     // be superfluous if SimpleTest creates a new test object for each test.
     $this->repocount = 0;
@@ -21,6 +27,9 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
       $args[] = 'versioncontrol_git';
     }
     call_user_func_array(array($this, 'parent::setUp'));
+
+    // Set the git path in the sandboxed $conf so it gets used properly
+    variable_set('versioncontrol_git_binary_path', $this->gitpath);
   }
 
   public function createRepoFromTestRepo() {
@@ -51,6 +60,11 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
         $item->isFile() ? unlink($item) : rmdir($item);
       }
       rmdir($path);
+    }
+
+    // Ensure the internal git path was reset properly.
+    if ($this->gitpath != _versioncontrol_git_get_binary_path(FALSE)) {
+      variable_set('versioncontrol_git_binary_path', $this->gitpath);
     }
   }
 }
