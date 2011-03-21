@@ -4,7 +4,18 @@ require_once drupal_get_path('module', 'versioncontrol') . '/tests/Versioncontro
 
 abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
 
+  /**
+   * An internal counter used to prevent filesystem collisions when creating
+   * multiple git repositories.
+   *
+   * @var int
+   */
+  protected $repocount = 0;
+
   public function setUp() {
+    // Each test cleans up its repos, so ensure we start over at 0. This might
+    // be superfluous if SimpleTest creates a new test object for each test.
+    $this->repocount = 0;
     $args = func_get_args();
     if (array_search('versioncontrol_git', $args) === FALSE) {
       $args[] = 'versioncontrol_git';
@@ -12,15 +23,33 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     call_user_func_array(array($this, 'parent::setUp'));
   }
 
-  public function versioncontrolCreateRepository($backend_name = 'git', $data = array(), $insert = TRUE) {
-    parent::versioncontrolCreateRepository($backend_name, $data, $insert);
-  }
-
   public function createRepoFromTestRepo($path) {
+    $this->repocount++;
+    $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
+    $tarball = drupal_get_path('module', 'versioncontrol_git') . '/tests/testrepo.tar.bz2';
+    mkdir($path);
+    exec("tar -xf $tarball -C $path");
 
+    $data = array(
+      'path' => $path,
+    );
+
+    $this->versioncontrolCreateRepository('git', $data);
   }
 
   public function createRepoFromClone($remote, $path) {
 
+  }
+
+  public function tearDown() {
+    $i = 0;
+    while ($i < $this->repocount) {
+      $path = file_directory_path() . '/vc_git/repositories/' . $i . '.git';
+      // Recursive directory delete
+      foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path), RecursiveIteratorIterator::CHILD_FIRST) as $item) {
+        $item->isFile() ? unlink($item) : rmdir($item);
+      }
+      rmdir($path);
+    }
   }
 }
