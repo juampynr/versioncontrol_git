@@ -103,7 +103,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     ) + $data;
 
     $repo = $this->versioncontrolCreateRepository('git', $data);
-    $repo->exec("clone $remote $path");
+    $repo->exec("clone --bare $remote $path");
     $this->assertTrue($repo->isValidGitRepo(), 'Valid git repository created at the expected location.');
 
     return $repo;
