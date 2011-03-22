@@ -64,7 +64,13 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    * repository from some remote location.
    *
    * The repository is created at a derived location on disk that ensures it
-   * will be automatically cleaned up when the test is completed.
+   * will be automatically cleaned up when the test is completed. The test
+   * repository has the following characteristics:
+   *
+   *  - 16 commits
+   *  - 4 branches - master, enhancements, feature, fixes
+   *  - 3 tags - simple, signed, annotated (each having the characteristics
+   *    they're named after)
    *
    * @param string $remote
    *   A string representing a valid git remote url (e.g.,
