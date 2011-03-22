@@ -32,6 +32,15 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     variable_set('versioncontrol_git_binary_path', $this->gitpath);
   }
 
+  /**
+   * Create a new Git repository on disk & in the db using the well-known,
+   * structured sample test repository.
+   *
+   * The repository is created at a derived location on disk that ensures it
+   * will be automatically cleaned up when the test is completed.
+   *
+   * @return VersioncontrolGitRepository
+   */
   public function createRepoFromTestRepo() {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
@@ -46,6 +55,20 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     return $this->versioncontrolCreateRepository('git', $data);
   }
 
+  /**
+   * Create a new Git repository on disk & in the db by cloning an existing
+   * repository from some remote location.
+   *
+   * The repository is created at a derived location on disk that ensures it
+   * will be automatically cleaned up when the test is completed.
+   *
+   * @param string $remote
+   *   A string representing a valid git remote url (e.g.,
+   *   git://git.drupal.org/project/versioncontrol.git), from which the new
+   *   repository should be cloned.
+   *
+   * @return VersioncontrolGitRepository
+   */
   public function createRepoFromClone($remote) {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
