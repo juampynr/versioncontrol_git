@@ -39,9 +39,13 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    * The repository is created at a derived location on disk that ensures it
    * will be automatically cleaned up when the test is completed.
    *
+   * @param array $data
+   *   An optional array of data to be passed to the entity builder for the
+   *   repository. @see VersioncontrolTestCase::versioncontrolCreateRepository()
+   *
    * @return VersioncontrolGitRepository
    */
-  public function createRepoFromTestRepo() {
+  public function createRepoFromTestRepo($data = array()) {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
     $tarball = drupal_get_path('module', 'versioncontrol_git') . '/tests/testrepo.tar.bz2';
@@ -50,7 +54,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
 
     $data = array(
       'path' => $path,
-    );
+    )  + $data;
 
     return $this->versioncontrolCreateRepository('git', $data);
   }
@@ -67,15 +71,19 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    *   git://git.drupal.org/project/versioncontrol.git), from which the new
    *   repository should be cloned.
    *
+   * @param array $data
+   *   An optional array of data to be passed to the entity builder for the
+   *   repository. @see VersioncontrolTestCase::versioncontrolCreateRepository()
+   *
    * @return VersioncontrolGitRepository
    */
-  public function createRepoFromClone($remote) {
+  public function createRepoFromClone($remote, $data = array()) {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
 
     $data = array(
       'path' => $path,
-    );
+    ) + $data;
 
     $repo = $this->versioncontrolCreateRepository('git', $data);
     $repo->exec("clone $remote $path");
