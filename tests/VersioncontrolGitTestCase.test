@@ -12,12 +12,10 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    */
   protected $repocount = 0;
 
-  protected $gitpath;
-
   public function setUp() {
     // Get the git path before clearing all vars. If no git binary is found, the
     // function will throw an error that safely terminates the test.
-    $this->gitpath = _versioncontrol_git_get_binary_path();
+    $gitpath = _versioncontrol_git_get_binary_path();
 
     // Each test cleans up its repos, so ensure we start over at 0. This might
     // be superfluous if SimpleTest creates a new test object for each test.
@@ -29,7 +27,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     call_user_func_array(array('VersioncontrolGitTestCase', 'parent::setUp'), $args);
 
     // Set the git path in the sandboxed $conf so it gets used properly
-    variable_set('versioncontrol_git_binary_path', $this->gitpath);
+    variable_set('versioncontrol_git_binary_path', $gitpath);
   }
 
   /**
@@ -124,24 +122,6 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
       $this->assertEqual(count($repository->loadCommits()), 16, t('Sync of test repository resulted in correct number of commits.'));
       $this->assertEqual(count($repository->loadBranches()), 4, t('Sync of test repository resulted in correct number of branches.'));
       $this->assertEqual(count($repository->loadTags()), 3, t('Sync of test repository resulted in correct number of tags.'));
-    }
-  }
-
-  public function tearDown() {
-    // Remove temporary repositories, if any
-    $i = 1;
-    while ($i <= $this->repocount) {
-      $path = file_directory_path() . '/vc_git/repositories/' . $i . '.git';
-      // Recursive directory delete
-      foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path), RecursiveIteratorIterator::CHILD_FIRST) as $item) {
-        $item->isFile() ? unlink($item) : rmdir($item);
-      }
-      rmdir($path);
-    }
-
-    // Ensure the internal git path was reset properly.
-    if ($this->gitpath != _versioncontrol_git_get_binary_path(FALSE)) {
-      variable_set('versioncontrol_git_binary_path', $this->gitpath);
     }
   }
 }
