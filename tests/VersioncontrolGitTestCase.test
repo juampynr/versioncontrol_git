@@ -26,7 +26,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     if (array_search('versioncontrol_git', $args) === FALSE) {
       $args[] = 'versioncontrol_git';
     }
-    call_user_func_array(array($this, 'parent::setUp'), $args);
+    call_user_func_array(array('VersioncontrolGitTestCase', 'parent::setUp'), $args);
 
     // Set the git path in the sandboxed $conf so it gets used properly
     variable_set('versioncontrol_git_binary_path', $this->gitpath);
