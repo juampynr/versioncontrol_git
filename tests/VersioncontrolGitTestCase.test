@@ -26,7 +26,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     if (array_search('versioncontrol_git', $args) === FALSE) {
       $args[] = 'versioncontrol_git';
     }
-    call_user_func_array(array($this, 'parent::setUp'));
+    call_user_func_array(array($this, 'parent::setUp'), $args);
 
     // Set the git path in the sandboxed $conf so it gets used properly
     variable_set('versioncontrol_git_binary_path', $this->gitpath);
@@ -49,7 +49,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
     $tarball = drupal_get_path('module', 'versioncontrol_git') . '/tests/testrepo.tar.bz2';
-    mkdir($path);
+    mkdir($path, 0777, TRUE);
     exec("tar -xf $tarball -C $path");
 
     $data = array(
