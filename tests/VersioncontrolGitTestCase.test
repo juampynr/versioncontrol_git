@@ -53,7 +53,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     exec("tar -xf $tarball -C $path");
 
     $data = array(
-      'path' => $path,
+      'root' => $path,
     )  + $data;
 
     return $this->versioncontrolCreateRepository('git', $data);
@@ -89,7 +89,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
 
     $data = array(
-      'path' => $path,
+      'root' => $path,
     ) + $data;
 
     $repo = $this->versioncontrolCreateRepository('git', $data);
@@ -117,8 +117,8 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
 
   public function tearDown() {
     // Remove temporary repositories, if any
-    $i = 0;
-    while ($i < $this->repocount) {
+    $i = 1;
+    while ($i <= $this->repocount) {
       $path = file_directory_path() . '/vc_git/repositories/' . $i . '.git';
       // Recursive directory delete
       foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path), RecursiveIteratorIterator::CHILD_FIRST) as $item) {
