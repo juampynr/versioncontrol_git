@@ -72,14 +72,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    * repository from some remote location.
    *
    * The repository is created at a derived location on disk that ensures it
-   * will be automatically cleaned up when the test is completed. The test
-   * repository has the following characteristics:
-   *
-   *  - 16 commits
-   *  - 18 'items' (files)
-   *  - 4 branches - master, enhancements, feature, fixes
-   *  - 3 tags - simple, signed, annotated (each having the characteristics
-   *    they're named after)
+   * will be automatically cleaned up when the test is completed.
    *
    * @param string $remote
    *   A string representing a valid git remote url (e.g.,
@@ -110,7 +103,19 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
   /**
    * Run history synchronization on an instance of the standard test repository.
    *
+   * The test repository has the following characteristics:
+   *
+   *  - 16 commits
+   *  - 18 'items' (files)
+   *  - 4 branches - master, enhancements, feature, fixes
+   *  - 3 tags - simple, signed, annotated (each having the characteristics
+   *    for which they're named)
+   *  - 45 commit/label mappings
+   *
    * @param VersioncontrolGitRepository $repository
+   *   The VersioncontrolGitRepository object representing the test repository
+   *   to synchronize.
+   *
    * @param bool $assert
    *   Whether or not to run assertions ensuring the sync went well.
    */
