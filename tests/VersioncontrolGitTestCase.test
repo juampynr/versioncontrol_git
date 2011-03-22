@@ -97,6 +97,24 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
     return $repo;
   }
 
+  /**
+   * Run history synchronization on an instance of the standard test repository.
+   *
+   * @param VersioncontrolGitRepository $repository
+   * @param bool $assert
+   *   Whether or not to run assertions ensuring the sync went well.
+   */
+  public function versioncontrolSyncTestRepository(VersioncontrolGitRepository $repository, $assert = TRUE) {
+    $synced = $repository->fetchLogs();
+
+    if ($assert) {
+      $this->assertTrue($synced, t('Sync of test repository completed successfully.'));
+      $this->assertEqual(count($repository->loadCommits()), 16, t('Sync of test repository resulted in correct number of commits.'));
+      $this->assertEqual(count($repository->loadBranches()), 4, t('Sync of test repository resulted in correct number of branches.'));
+      $this->assertEqual(count($repository->loadTags()), 3, t('Sync of test repository resulted in correct number of tags.'));
+    }
+  }
+
   public function tearDown() {
     // Remove temporary repositories, if any
     $i = 0;
