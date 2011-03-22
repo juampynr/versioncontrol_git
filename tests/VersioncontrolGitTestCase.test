@@ -43,9 +43,12 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    *   An optional array of data to be passed to the entity builder for the
    *   repository. @see VersioncontrolTestCase::versioncontrolCreateRepository()
    *
+   * @param bool $sync
+   *   If TRUE, repository is synced after creation.
+   *
    * @return VersioncontrolGitRepository
    */
-  public function versioncontrolCreateRepoFromTestRepo($data = array()) {
+  public function versioncontrolCreateRepoFromTestRepo($data = array(), $sync = TRUE) {
     $this->repocount++;
     $path = file_directory_path() . '/vc_git/repositories/' . $this->repocount . '.git';
     $tarball = drupal_get_path('module', 'versioncontrol_git') . '/tests/testrepo.tar.bz2';
@@ -56,7 +59,14 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
       'root' => $path,
     )  + $data;
 
-    return $this->versioncontrolCreateRepository('git', $data);
+    $repo = $this->versioncontrolCreateRepository('git', $data);
+    $this->assertTrue($repo->isValidGitRepo(), 'Valid git repository created at the expected location.');
+
+    if ($sync) {
+      $this->versioncontrolSyncTestRepository($repo);
+    }
+
+    return $repo;
   }
 
   /**
@@ -94,6 +104,8 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
 
     $repo = $this->versioncontrolCreateRepository('git', $data);
     $repo->exec("clone $remote $path");
+    $this->assertTrue($repo->isValidGitRepo(), 'Valid git repository created at the expected location.');
+
     return $repo;
   }
 
