@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @file
+ *
+ * Tests ensuring that actions which produce or destroy vcapi data (that is,
+ * creating or deleting commits & labels) do their job correctly.
+ */
+
+require_once drupal_get_path('module', 'versioncontrol_git') . '/tests/VersioncontrolGitTestCase.test';
+
+class VersioncontrolGitDataIntegrityTests extends VersioncontrolGitTestCase {
+  protected $repos = array();
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('Git data integrity tests'),
+      'description' => t('Tests ensuring that synced Git repository data is maintained properly through various operations.'),
+      'group' => t('Version Control Git'),
+    );
+  }
+
+  /**
+   * Ensure that the VersioncontrolRepository::purgeData() method purges all
+   * relevant data, but only the relevant data, in both bypassing and
+   * non-bypassing modes.
+   */
+  public function testEnsurePurgeSanity() {
+    // Pop out three quick, identical test repos.
+    $this->repos[] = $this->versioncontrolCreateRepoFromTestRepo();
+    $nonbypass = $this->repos[] = $this->versioncontrolCreateRepoFromTestRepo();
+    $bypass = $this->repos[] = $this->versioncontrolCreateRepoFromTestRepo();
+
+    // First purge test, in non-bypass (entity-by-entity delete) mode.
+    $nonbypass->purgeData(FALSE);
+
+    $ir_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_item_revisions}'));
+    $git_ir_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_item_revisions}'));
+    $op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operations}'));
+    $git_op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
+    $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
+    $label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_labels}'));
+
+    $this->assertEqual($ir_count, 36, t('Correct number of item revisions in {versioncontrol_item_revisions} table after non-bypassing purge.'));
+    $this->assertEqual($git_ir_count, $op_count, t('Equal number of {versioncontrol_git_item_revisions} and {versioncontrol_item_revisions} records after non-bypassing purge.'));
+
+    $this->assertEqual($op_count, 32, t('Correct number of operations in {versioncontrol_operations} table after non-bypassing purge.'));
+    $this->assertEqual($git_op_count, $op_count, t('Equal number of {versioncontrol_git_operations} and {versioncontrol_operations} records after non-bypassing purge.'));
+    $this->assertEqual($op_label_count, 90, t('Correct number of operation/label mappings in {versioncontrol_operation_labels} after non-bypassing purge.'));
+
+    $this->assertEqual($label_count, 14, t('Correct number of labels in {versioncontrol_labels} after non-bypassing purge.'));
+
+    // Second purge test, in bypass (single massive delete query) mode.
+    $bypass->purgeData(TRUE);
+
+    $ir_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_item_revisions}'));
+    $git_ir_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_item_revisions}'));
+    $op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operations}'));
+    $git_op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
+    $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
+    $label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_labels}'));
+
+    $this->assertEqual($ir_count, 18, t('Correct number of item revisions in {versioncontrol_item_revisions} table after non-bypassing purge.'));
+    $this->assertEqual($git_ir_count, $op_count, t('Equal number of {versioncontrol_git_item_revisions} and {versioncontrol_item_revisions} records after non-bypassing purge.'));
+
+    $this->assertEqual($op_count, 16, t('Correct number of operations in {versioncontrol_operations} table after non-bypassing purge.'));
+    $this->assertEqual($git_op_count, $op_count, t('Equal number of {versioncontrol_git_operations} and {versioncontrol_operations} records after non-bypassing purge.'));
+    $this->assertEqual($op_label_count, 45, t('Correct number of operation/label mappings in {versioncontrol_operation_labels} after non-bypassing purge.'));
+
+    $this->assertEqual($label_count, 7, t('Correct number of labels in {versioncontrol_labels} after non-bypassing purge.'));
+  }
+}
