@@ -68,6 +68,7 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    * repository has the following characteristics:
    *
    *  - 16 commits
+   *  - 18 'items' (files)
    *  - 4 branches - master, enhancements, feature, fixes
    *  - 3 tags - simple, signed, annotated (each having the characteristics
    *    they're named after)
