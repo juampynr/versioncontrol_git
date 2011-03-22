@@ -41,7 +41,7 @@ class VersioncontrolGitDataIntegrityTests extends VersioncontrolGitTestCase {
     $git_ir_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_item_revisions}'));
     $op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operations}'));
     $git_op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
-    $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
+    $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operation_labels}'));
     $label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_labels}'));
 
     $this->assertEqual($ir_count, 36, t('Correct number of item revisions in {versioncontrol_item_revisions} table after non-bypassing purge.'));
@@ -60,7 +60,7 @@ class VersioncontrolGitDataIntegrityTests extends VersioncontrolGitTestCase {
     $git_ir_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_item_revisions}'));
     $op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operations}'));
     $git_op_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
-    $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_git_operations}'));
+    $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operation_labels}'));
     $label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_labels}'));
 
     $this->assertEqual($ir_count, 18, t('Correct number of item revisions in {versioncontrol_item_revisions} table after non-bypassing purge.'));
