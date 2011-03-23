@@ -127,6 +127,8 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
       $this->assertEqual(count($repository->loadCommits()), 16, t('Sync of test repository resulted in correct number of commits.'));
       $this->assertEqual(count($repository->loadBranches()), 4, t('Sync of test repository resulted in correct number of branches.'));
       $this->assertEqual(count($repository->loadTags()), 3, t('Sync of test repository resulted in correct number of tags.'));
+      $op_label_count = db_result(db_query('SELECT COUNT(*) FROM {versioncontrol_operation_labels} vol INNER JOIN {versioncontrol_labels} vl ON vol.label_id = vl.label_id WHERE vl.repo_id = %d', $repository->repo_id));
+      $this->assertEqual($op_label_count, 45, t('Sync of test repository resulted in correct number of commit/label mappings.'));
     }
   }
 }
