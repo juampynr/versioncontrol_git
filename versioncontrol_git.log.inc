@@ -149,7 +149,7 @@ function _versioncontrol_git_log_exec($command) {
  * @return VersioncontrolBranch
  */
 function _versioncontrol_git_log_get_branches_of_commit($revision, $branch_label_list) {
-  $exec = 'branch --contains ' . escapeshellarg($revision);
+  $exec = 'branch --no-color --contains ' . escapeshellarg($revision);
   $logs = _versioncontrol_git_log_exec($exec);
   $branches = array();
   while (($line = next($logs)) !== FALSE) {
