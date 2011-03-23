@@ -12,6 +12,14 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    */
   protected $repocount = 0;
 
+  /**
+   * State var indicating whether the test repo syncing logic has already been
+   * run; no point in running it more than once, just generates noise.
+   *
+   * @var bool
+   */
+  protected $testRepoChecked = FALSE;
+
   public function setUp() {
     // Get the git path before clearing all vars. If no git binary is found, the
     // function will throw an error that safely terminates the test.
@@ -115,14 +123,13 @@ abstract class VersioncontrolGitTestCase extends VersioncontrolTestCase {
    * @param VersioncontrolGitRepository $repository
    *   The VersioncontrolGitRepository object representing the test repository
    *   to synchronize.
-   *
-   * @param bool $assert
-   *   Whether or not to run assertions ensuring the sync went well.
    */
-  public function versioncontrolSyncTestRepository(VersioncontrolGitRepository $repository, $assert = TRUE) {
+  public function versioncontrolSyncTestRepository(VersioncontrolGitRepository $repository) {
     $synced = $repository->fetchLogs();
 
-    if ($assert) {
+    if (!$this->testRepoChecked) {
+      // It's pointless to run these checks more than once.
+      $this->testRepoChecked = TRUE;
       $this->assertTrue($synced, t('Sync of test repository completed successfully.'));
       $this->assertEqual(count($repository->loadCommits()), 16, t('Sync of test repository resulted in correct number of commits.'));
       $this->assertEqual(count($repository->loadBranches()), 4, t('Sync of test repository resulted in correct number of branches.'));
