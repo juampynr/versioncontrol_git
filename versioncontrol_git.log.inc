@@ -86,7 +86,7 @@ function _versioncontrol_git_log_update_repository(VersioncontrolGitRepository &
 
   // Insert new commits in the database.
   foreach ($commits_new as $hash) {
-    $command = "show --numstat --summary --pretty=format:\"%H%n%P%n%an%n%ae%n%cn%n%ce%n%ct%n%s%n%b%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
+    $command = "show --numstat --summary --pretty=format:\"%H%n%P%n%an%n%ae%n%cn%n%ce%n%ct%n%B%nENDOFOUTPUTGITMESSAGEHERE\" " . escapeshellarg($hash);
     $output = _versioncontrol_git_log_exec($command);
     _versioncontrol_git_log_parse_and_insert_commit($repository, $output, $branches_in_db_by_name);
   }
@@ -341,9 +341,6 @@ function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepositor
         $message = substr($message, 0, strlen($message) - 1);
       }
       break;
-    }
-    if ($i == 1) {
-      $message .= "\n";
     }
     $message .= $line ."\n";
     $i++;
