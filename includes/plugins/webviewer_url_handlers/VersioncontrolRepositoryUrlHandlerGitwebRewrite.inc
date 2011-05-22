@@ -12,7 +12,7 @@
  */
 class VersioncontrolRepositoryUrlHandlerGitwebRewrite extends VersioncontrolRepositoryUrlHandler {
 
-  public function getItemLogViewUrl(&$item) {
+  public function getItemLogViewUrl($item) {
     $placeholders = array(
       '%repo_name' => $this->repository->name,
       '%path'      => $item->path,
@@ -27,7 +27,7 @@ class VersioncontrolRepositoryUrlHandlerGitwebRewrite extends VersioncontrolRepo
     }
   }
 
-  public function getItemViewUrl(&$item) {
+  public function getItemViewUrl($item) {
     $placeholders = array(
       '%repo_name' => $this->repository->name,
       '%path'      => $item->path,
@@ -46,7 +46,7 @@ class VersioncontrolRepositoryUrlHandlerGitwebRewrite extends VersioncontrolRepo
     return strtr($view_url, $placeholders);
   }
 
-  public function getDiffUrl(&$file_item_new, $file_item_old) {
+  public function getDiffUrl($file_item_new, $file_item_old) {
     $placeholders = array(
       '%repo_name'    => $this->repository->name,
       '%path'         => $file_item_new->path,

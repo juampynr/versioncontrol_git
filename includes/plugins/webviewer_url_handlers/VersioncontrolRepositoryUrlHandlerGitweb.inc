@@ -13,7 +13,7 @@ class VersioncontrolRepositoryUrlHandlerGitweb extends VersioncontrolRepositoryU
    * Gitweb do not need to have a hash base parameter to show an item
    * log history.
    */
-  public function getItemLogViewUrl(&$item) {
+  public function getItemLogViewUrl($item) {
     $placeholders = array(
       '%repo_name' => $this->repository->name,
       '%path'     => substr($item->path, 1),
@@ -43,7 +43,7 @@ class VersioncontrolRepositoryUrlHandlerGitweb extends VersioncontrolRepositoryU
    * Gitweb do not need to have a hash base parameter to show an item
    * content.
    */
-  public function getItemViewUrl(&$item) {
+  public function getItemViewUrl($item) {
     // Removed items has not blob hash
     if (is_null($item->blob_hash)) {
       return '';
@@ -75,7 +75,7 @@ class VersioncontrolRepositoryUrlHandlerGitweb extends VersioncontrolRepositoryU
   /**
    * Gitweb use blobs for diff.
    */
-  public function getDiffUrl(&$file_item_new, $file_item_old) {
+  public function getDiffUrl($file_item_new, $file_item_old) {
     $placeholders = array(
       '%repo_name' => $this->repository->name,
       '%path'         => $file_item_new->path,
