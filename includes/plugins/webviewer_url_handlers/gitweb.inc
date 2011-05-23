@@ -15,7 +15,7 @@ $plugin = array(
     'directory_log_view' => '%base_url/?p=%repo_name;a=history;f=%path;h=%revision%branch',
     'file_view' => '%base_url/?p=%repo_name;a=blob;f=%path;h=%revision%branch',
     'directory_view' => '%base_url/?p=%repo_name;a=tree;f=%path;h=%revision%branch',
-    'diff' => '%base_url/?p=%repo_name;a=blobdiff;f=%path;h=%new_blob_hash;hp=%old_blob_hash%new_revision%old_revision',
+    'diff' => '%base_url/?p=%repo_name;a=blobdiff;f=%path;h=%new_blob_hash;hp=%old_blob_hash;hb=%new_revision;hpb=%old_revision',
   ),
   'handler' => array(
     'class' => 'VersioncontrolRepositoryUrlHandlerGitweb',
