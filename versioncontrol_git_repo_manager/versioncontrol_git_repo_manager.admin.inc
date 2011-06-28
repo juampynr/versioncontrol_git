@@ -13,7 +13,7 @@ function versioncontrol_git_repo_manager_settings_form() {
     '#title' => t('Base Repository Path'),
     '#description' => t('The path on disk where this repository resides.  This folder must actually exist.'),
     '#type' => 'textfield',
-    '#default_value' => variable_get('project_git_auth_repository_base_path', '/git'),
+    '#default_value' => variable_get('versioncontrol_git_repo_manager_repository_base_path', '/git'),
   );
   if (module_exists('versioncontrol_project')) {
     $form['versioncontrol_git_repo_manager_manage_repos_for_projects'] = array(
