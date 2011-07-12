@@ -322,11 +322,11 @@ function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepositor
   $merge = isset($parents[1]); // Multiple parents indicates a merge
 
   // Get author data
-  $author_name = trim(next($logs));
-  $author_email = trim(next($logs));
+  $author_name = iconv("UTF-8", "UTF-8//IGNORE", trim(next($logs)));
+  $author_email = iconv("UTF-8", "UTF-8//IGNORE", trim(next($logs)));
   // Get committer data
-  $committer_name = trim(next($logs));
-  $committer_email = trim(next($logs));
+  $committer_name = iconv("UTF-8", "UTF-8//IGNORE", trim(next($logs)));
+  $committer_email = iconv("UTF-8", "UTF-8//IGNORE", trim(next($logs)));
 
   // Get date as timestamp
   $date = trim(next($logs));
@@ -335,7 +335,7 @@ function _versioncontrol_git_log_parse_and_insert_commit(VersioncontrolRepositor
   // TODO: revisit!
   $message = '';
   $i = 0;
-  while (($line = trim(next($logs))) !== FALSE) {
+  while (($line = iconv("UTF-8", "UTF-8//IGNORE", trim(next($logs)))) !== FALSE) {
     if ($line == 'ENDOFOUTPUTGITMESSAGEHERE') {
       if (substr($message, -2) === "\n\n") {
         $message = substr($message, 0, strlen($message) - 1);
