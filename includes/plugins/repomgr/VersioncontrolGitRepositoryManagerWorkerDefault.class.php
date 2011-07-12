@@ -15,7 +15,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
         '@name' => $repository->name,
         '@repo_id' => empty($repository->repo_id) ? '[NEW]' : $repository->repo_id,
       );
-      watchdog($msg, $vars, WATCHDOG_ERROR);
+      watchdog('versioncontrol', $msg, $vars, WATCHDOG_ERROR);
       throw new Exception(strtr($msg, $vars), E_ERROR);
     }
     $this->repository = $repository;
@@ -114,7 +114,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
     if (empty($this->repository)) {
       $this->verified = FALSE;
       $msg = 'No repository object was attached for the repomgr to work on.';
-      watchdog($msg, array(), WATCHDOG_ERROR);
+      watchdog('versioncontrol', $msg, array(), WATCHDOG_ERROR);
       if ($exception) {
         throw new Exception($msg, E_ERROR);
       }
@@ -154,7 +154,7 @@ class VersioncontrolGitRepositoryManagerWorkerDefault implements VersioncontrolG
           '%stderr' => $stderr,
         );
         $text = "Invocation of '%command' exited with return code %code";
-        watchdog('vc_git', $text . ", emitting stdout:\n%stdout\n\nand stderr:\n%stderr", $vars, WATCHDOG_ERROR);
+        watchdog('versioncontrol', $text . ", emitting stdout:\n%stdout\n\nand stderr:\n%stderr", $vars, WATCHDOG_ERROR);
         if ($exception) {
           throw new Exception(strtr($text, array_slice($vars, 0, 2)), E_ERROR);
         }

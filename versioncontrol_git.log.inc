@@ -131,7 +131,7 @@ function _versioncontrol_git_log_exec($command) {
   $logs = array();
   $git_bin = variable_get('versioncontrol_git_binary_path', 'git');
   if ($errors = _versioncontrol_git_binary_check_path($git_bin)) {
-    watchdog('versioncontrol_git', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
+    watchdog('versioncontrol', '!errors', array('!errors' => implode('<br />', $errors)), WATCHDOG_ERROR);
     return array();
   }
   exec(escapeshellcmd("$git_bin $command"), $logs);
@@ -520,7 +520,7 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
       }
     }
     else {
-      watchdog('versioncontrol_git', 'Serious problem in tag parsing, please check that you\'re using a supported version of git!');
+      watchdog('versioncontrol', 'Serious problem in tag parsing, please check that you\'re using a supported version of git!');
     }
 
     $tag_data = array(
