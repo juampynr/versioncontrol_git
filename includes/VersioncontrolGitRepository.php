@@ -107,7 +107,6 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
 
     $data = array(
       'repo_id' => $this->repo_id,
-      'action' => VERSIONCONTROL_ACTION_MODIFIED,
       'label_id' => NULL,
     );
     $logs = $this->exec('show-ref --heads');
@@ -129,7 +128,6 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
     $tags = array();
     $data = array(
       'repo_id' => $this->repo_id,
-      'action' => VERSIONCONTROL_ACTION_MODIFIED,
       'label_id' => NULL,
     );
 

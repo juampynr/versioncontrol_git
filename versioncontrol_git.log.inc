@@ -3,7 +3,6 @@
  * @file
  * Git backend for Version Control API - Provides Git commit information and
  * account management as a pluggable backend.
- * FIXME add an action to operation_labels
  *
  * Copyright 2008 by Jimmy Berry ("boombatower", http://drupal.org/user/214218)
  * Copyright 2009-2010 by Cornelius Riemenschneider ("CorniI", http://drupal.org/user/136353)
@@ -529,7 +528,7 @@ function _versioncontrol_git_log_process_tags($repository, $tags_new) {
       'repo_id' => $repository->repo_id,
     );
 
-    $tag = $repository->getBackend()->buildEntity('tag', $tag_data + array('action' => VERSIONCONTROL_ACTION_ADDED));
+    $tag = $repository->getBackend()->buildEntity('tag', $tag_data);
     $tag->insert();
   }
 }
