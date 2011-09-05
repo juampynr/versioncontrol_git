@@ -50,6 +50,18 @@ function versioncontrol_git_repo_activity_stream_worker_callback($data) {
  * Worker callback for the versioncontrol_git_repo_parsing queue.
  *
  * @param array $data
+ *   Keyed array containing:
+ *   - 'uid' => the drupal.org UID of the user who pushed.
+ *   - 'timestamp' => the commmit timestamp.
+ *   - 'data' => string created by git post-receive hook. See man githooks.
+ *     Examples of the format of $data['data']:
+ *     - 55fad39dee33d6d31f822e5394b867a1d6bcbdc9 7392eee0f339fb8c8787e33d4d499cc1a29ad5de refs/heads/master
+ *       indicates that the master branch was updated; it used to point to 55fad3,
+ *       and now points to 7392eee.
+ *     - 55fad39dee33d6d31f822e5394b867a1d6bcbdc9 0000000000000000000000000000000000000000 refs/heads/foobar
+ *       indicates that the foobar branch started at 55fad39, but was deleted.
+ *     - 0000000000000000000000000000000000000000 7392eee0f339fb8c8787e33d4d499cc1a29ad5de refs/tags/7.x-1.0
+ *       indicates that the tag 7.x-1.0 was created.
  */
 function versioncontrol_git_repo_parsing_worker_callback($data) {
   if (empty($data['repo_id'])) {
