@@ -152,6 +152,20 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   }
 
   /**
+   * Clones the repository to a given path
+   *
+   * @param $path
+   *   A string with the full destination path
+   *
+   * @return
+   *   string log containing the output
+   */
+  public function cloneRepository($path) {
+    $logs = $this->exec('git clone ' . $this->root . ' ' . $path);
+    return $logs;
+  }
+
+  /**
    * Execute a Git command using the root context and the command to be
    * executed.
    *
