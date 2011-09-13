@@ -158,10 +158,10 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
    *   A string with the full destination path
    *
    * @return
-   *   string log containing the output
+   *   array log containing the output
    */
   public function cloneRepository($path) {
-    $logs = $this->exec('git clone ' . $this->root . ' ' . $path);
+    exec('git clone ' . $this->root . ' ' . $path, $logs, $return);
     return $logs;
   }
 
