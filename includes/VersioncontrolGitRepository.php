@@ -166,6 +166,45 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   }
 
   /**
+   * Adds selected files to the git index 
+   *
+   * @param $pattern
+   *   A string with the pattern to add files
+   *
+   * @return
+   *   array log containing the output
+   */
+  public function add($pattern) {
+    exec('git add ' . $pattern, $logs, $return);
+    return $logs;
+  }
+
+  /**
+   * Commits added files
+   *
+   * @param $message
+   *   A string with the commit message description
+   *
+   * @return
+   *   array log containing the output
+   */
+  public function commit($message) {
+    exec('git commit -m "' . $message . '"', $logs, $return);
+    return $logs;
+  }
+
+  /**
+   * Pushes commits back to the default origin
+   *
+   * @return
+   *   array log containing the output
+   */
+  public function push() {
+    $output = exec('git push', $logs, $return);
+    return $output;
+  }
+
+  /**
    * Execute a Git command using the root context and the command to be
    * executed.
    *
