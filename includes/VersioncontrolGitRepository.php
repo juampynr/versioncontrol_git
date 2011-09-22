@@ -14,6 +14,16 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
   public $envSet = FALSE;
 
   /**
+   * Working tree path, which means the root path of a clone of this repository
+   *
+   * Used for adding, committing and pushing
+   *
+   * @var string 
+   */
+  public $work_tree = '';
+
+
+  /**
    * Ensure environment variables are set for interaction with the repository on
    * disk.
    *
@@ -27,6 +37,17 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
     }
   }
 
+  /**
+   * Return working tree environment variables to use them in commands
+   * that deal with a work tree (a clone of a git repository)
+   *
+   * @return
+   *   string git variables such as "--work-tree=/home/test-repo"
+   */
+  public function getWorkTreeEnv() {
+    return '--git-dir=' . $this->work_tree . '/.git --work-tree=' . $this->work_tree;
+  }
+  
   public function purgeData($bypass = TRUE) {
     if (empty($bypass)) {
       foreach ($this->loadBranches() as $branch) {
@@ -162,6 +183,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
    */
   public function cloneRepository($path) {
     exec('git clone ' . $this->root . ' ' . $path, $logs, $return);
+    $this->work_tree = $path;
     return $logs;
   }
 
@@ -175,8 +197,8 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
    *   array log containing the output
    */
   public function add($pattern) {
-    exec('git add ' . $pattern, $logs, $return);
-    return $logs;
+    $output = exec('git ' . $this->getWorkTreeEnv() . ' add ' . $this->work_tree .'/' . $pattern, $logs, $return);
+    return $output;
   }
 
   /**
@@ -189,8 +211,8 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
    *   array log containing the output
    */
   public function commit($message) {
-    exec('git commit -m "' . $message . '"', $logs, $return);
-    return $logs;
+    $output = exec('git ' . $this->getWorkTreeEnv() . ' commit -m "' . $message . '"', $logs, $return);
+    return $output;
   }
 
   /**
@@ -200,7 +222,7 @@ class VersioncontrolGitRepository extends VersioncontrolRepository {
    *   array log containing the output
    */
   public function push() {
-    $output = exec('git push', $logs, $return);
+    $output = exec('git ' . $this->getWorkTreeEnv() . ' push', $logs, $return);
     return $output;
   }
 
